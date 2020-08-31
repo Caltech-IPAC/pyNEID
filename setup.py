@@ -13,7 +13,7 @@ setup(
     author="Mihseh Kong",
     description="NEID archive access client", 
     long_description = long_description,
-    url="https://github.com/Caltech_IPAC/pyNEID",
+    url="https://github.com/Caltech-IPAC/pyNEID",
     classifiers=[
         'Intended Audience :: Science/Research',
         'Programming Language :: Python :: 3.6',
