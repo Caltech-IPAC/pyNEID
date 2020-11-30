@@ -19,12 +19,10 @@ from astropy.table import Table, Column
 from . import conf
 
 
+""" { Archive class
+"""
 class Archive:
-#
-#{ Archive class
-#
-    """
-    'Archive' class provides NEID archive access functions for searching 
+    """ 'Archive' class provides NEID archive access functions for searching 
     NEID data via TAP interface.  
     
     The user's NEID credentials (given at login as a cookie file or a token 
@@ -54,12 +52,12 @@ class Archive:
     debug = 0    
 
 
+
+    """{ Archive.init module
+    """ 
     def __init__(self, **kwargs):
-    #
-    #{ Archive.init
-    #
-        """
-        'init' method initialize the class with optional debugfile flag
+        
+        """'init' method initialize the class with optional debugfile flag
 
         Optional inputs:
         ----------------
@@ -96,11 +94,11 @@ class Archive:
             logging.debug ('Enter Archive.init:')
 
 
-#
-#    retrieve baseurl from conf class;
-#
-#    during dev or test, baseurl will be a keyword input
-#
+
+        """retrieve baseurl from conf class;
+        during dev or test, baseurl will be a keyword input
+        """
+
         self.baseurl = conf.server
 
         self.baseurl = ''
@@ -112,35 +110,34 @@ class Archive:
                 logging.debug ('')
                 logging.debug (f'baseurl= {self.baseurl:s}')
 
-#
-#    urls for nph-tap.py, nph-neidLogin, nph-makeQyery, nph-neidDownload
-#
-            self.tap_url = self.baseurl + '/TAP'
-            self.login_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidLogin.py?'
-            self.makequery_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidMakequery.py?'
-            self.getneid_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidDownload.py?'
+        """urls for nph-tap.py, nph-neidLogin, nph-makeQyery, nph-neidDownload
+        """
 
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'login_url= [{self.login_url:s}]')
-                logging.debug (f'tap_url= [{self.tap_url:s}]')
-                logging.debug (f'makequery_url= [{self.makequery_url:s}]')
-                logging.debug (f'self.getneid_url= {self.getneid_url:s}')
+        self.tap_url = self.baseurl + '/TAP'
+        self.login_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidLogin.py?'
+        self.makequery_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidMakequery.py?'
+        self.getneid_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidDownload.py?'
+
+        if self.debug:
+            logging.debug ('')
+            logging.debug (f'login_url= [{self.login_url:s}]')
+            logging.debug (f'tap_url= [{self.tap_url:s}]')
+            logging.debug (f'makequery_url= [{self.makequery_url:s}]')
+            logging.debug (f'self.getneid_url= {self.getneid_url:s}')
       
         return
-    #
-    #} end Archive.init
-    #
+    
+    """} end Archive.init
+    """ 
 
 
+    """{ Archive.login
+    """
     def login (self, **kwargs):
-    #
-    #{ Archive.login
-    #
-        """
-        login method validates a user has a valid NEID account; it takes two
-        'keyword' arguments: userid and password. If the inputs are not 
-        provided in the keyword, the auth method prompts for inputs.
+        
+        """login method validates a user has a valid NEID account; 
+        it takes two 'keyword' arguments: userid and password. If the inputs 
+        are not provided in the keyword, the auth method prompts for inputs.
 
         Required keyword input:
         -----------------------     
@@ -224,25 +221,25 @@ class Archive:
         self.status = ''
         self.msg = ''
 
-#
-#    get userid and password via keyboard input
-#
+
+        """get userid and password via keyboard input
+        """
+        
         if (len(userid) == 0):
             userid = input ("Userid: ")
 
         if (len(password) == 0):
             password = getpass.getpass ("Password: ")
 
-        """
+        """hide debug password printout
         password = urllib.parse.quote (password)
         if self.debug:
             logging.debug ('')
             logging.debug (f'password= {password:s}')
         """
 
-#
-#    retrieve baseurl from conf class;
-#
+        """retrieve baseurl from conf class;
+        """ 
         
         self.baseurl = conf.server
 
@@ -251,9 +248,9 @@ class Archive:
             logging.debug (f'baseurl (from conf)= {self.baseurl:s}')
         
 
-#
-#  retrieve cookiepath
-#
+        """retrieve cookiepath
+        """
+        
         if ('cookiepath' in kwargs):
             self.cookiepath = kwargs.get ('cookiepath')
 
@@ -261,9 +258,9 @@ class Archive:
             logging.debug ('')
             logging.debug (f'cookiepath= {self.cookiepath:s}')
 
-#
-#  construct full url for login
-#
+        """construct full url for login
+        """
+
         if ('server' in kwargs):
             self.baseurl = kwargs.get ('server')
 
@@ -290,9 +287,9 @@ class Archive:
             logging.debug (f'url= [{url:s}]')
 
 
-#
-#     cookiejar declared and linked to cookiepath
-#
+        """cookiejar declared and linked to cookiepath
+        """
+
         if self.debug:
             logging.debug ('')
             logging.debug ('declare request session with cookie')
@@ -307,7 +304,6 @@ class Archive:
         
         except Exception as e:
 
-#            self.msg = 'Failed to login: ' + str(e)
             self.msg = str(e)
             print (self.msg)
             return
@@ -319,11 +315,11 @@ class Archive:
             logging.debug ('response.headers: ')
             logging.debug (response.headers)
        
-#
-#    check content-type in response header: 
-#    it should be an 'application/json' structure, 
-#    parse for return status and message
-#
+        """check content-type in response header: 
+        it should be an 'application/json' structure, parse for returned 
+        status and message
+        """
+
         contenttype = response.headers['Content-type']
         
         if self.debug:
@@ -357,16 +353,14 @@ class Archive:
             
             self.msg = 'Successfully login as ' + userid
 
-#            cookiejar.save (self.cookiepath, ignore_discard=True);
-       
             if (len(self.cookiepath) > 0):
                 
                 cookiejar.save ()
                 self.cookie_loaded = 1
 
-#
-#    print out cookie values in debug file
-#   
+                """print out cookie values in debug file
+                """
+
                 if self.debug:
                     for cookie in cookiejar:
                         logging.debug ('')
@@ -381,18 +375,16 @@ class Archive:
 
         print (self.msg)
         return
-    #
-    #} end Archive.login
-    #
+    
+    """} end Archive.login
+    """
 
 
+    """{ Archive.query_datetime
+    """
     def query_datetime (self, datalevel, datetime, **kwargs):
-    #
-    #{ Archive.query_datetime
-    #
         
-        """
-        'query_datetime' method search NEID data by 'datetime' range
+        """'query_datetime' method search NEID data by 'datetime' range
         
         Required Position Inputs:
         ---------------    
@@ -493,9 +485,9 @@ class Archive:
             logging.debug (f'datalevel= {self.datalevel:s}')
             logging.debug (f'datetime= {self.datetime:s}')
 
-#
-#    send url to server to construct the select statement
-#
+        """send url to server to construct the select statement
+        """
+       
         param = dict()
         param['datalevel'] = self.datalevel
         param['datetime'] = self.datetime
@@ -507,16 +499,15 @@ class Archive:
         self.query_criteria (param, **kwargs)
 
         return
-    #
-    #} end Archive.query_datetime
-    #
+    
+    """} end Archive.query_datetime
+    """ 
  
 
-
+    """{ Archive.query_position
+    """
     def query_position (self, datalevel, position, **kwargs):
-    #
-    #{ Archive.query_position
-    #
+    
         """
         'query_position' method search NEID data by 'position' 
         
@@ -605,9 +596,9 @@ class Archive:
             logging.debug (f'datalevel=  {self.datalevel:s}')
             logging.debug (f'position=  {self.position:s}')
 
-#
-#    send url to server to construct the select statement
-#
+        """send url to server to construct the select statement
+        """
+        
         param = dict()
         param['datalevel'] = self.datalevel
         param['position'] = self.position
@@ -615,15 +606,14 @@ class Archive:
         self.query_criteria (param, **kwargs)
 
         return
-    #
-    #} end Archive.query_position
-    #
+    
+    """} end Archive.query_position
+    """ 
         
 
+    """{ Archive.query_object
+    """
     def query_object (self, datalevel, object, **kwargs):
-    #
-    #{ Archive.query_object
-    #
         
         """
         'query_object_name' method search NEID data by 'object name' 
@@ -800,9 +790,9 @@ class Archive:
         print (f'object name resolved: ra2000= {ra2000:s}, de2000c={dec2000:s}')
  
  
-#
-#    send url to server to construct the select statement
-#
+        """send url to server to construct the select statement
+        """
+       
         param = dict()
         
         param['datalevel'] = self.datalevel
@@ -811,15 +801,14 @@ class Archive:
         self.query_criteria (param, **kwargs)
 
         return
-    #
-    #} end  Archive.query_object
-    #
+    
+    """} end  Archive.query_object
+    """
 
 
+    """{ Archive.query_piname
+    """
     def query_piname (self, datalevel, piname, **kwargs):
-    #
-    #{ Archive.query_piname
-    #
         
         """
         'query_piname' method search NEID data by 'piname' 
@@ -900,9 +889,9 @@ class Archive:
             logging.debug (f'piname= {self.piname:s}')
 
         
-#
-#    send url to server to construct the select statement
-#
+        """send url to server to construct the select statement
+        """
+       
         param = dict()
         
         param['datalevel'] = self.datalevel
@@ -911,15 +900,15 @@ class Archive:
         self.query_criteria (param, **kwargs)
 
         return
-    #
-    #} end  Archive.query_piname
-    #
+    
+    """} end  Archive.query_piname
+    """
         
 
+    
+    """{ Archive.query_program
+    """
     def query_program (self, datalevel, program, **kwargs):
-    #
-    #{ Archive.query_program
-    #
         """
         'query_program' method search NEID data by 'program' 
         
@@ -999,9 +988,9 @@ class Archive:
             logging.debug (f'program= {self.program:s}')
 
         
-#
-#    send url to server to construct the select statement
-#
+        """send url to server to construct the select statement
+        """
+       
         param = dict()
         
         param['datalevel'] = self.datalevel
@@ -1010,16 +999,16 @@ class Archive:
         self.query_criteria (param, **kwargs)
 
         return
-    #
-    #} end  Archive.query_program
-    #
+    
+    """} end  Archive.query_program
+    """
 
 
     
+    
+    """{ Archive.query_criteria
+    """
     def query_criteria (self, param, **kwargs):
-    #
-    #{ Archive.query_criteria
-    #
         
         """
         'query_criteria' method allows the search of NEID data by multiple
@@ -1096,9 +1085,9 @@ class Archive:
             logging.debug ('Enter query_criteria')
         
         
-#
-#    retrieve keyword parameters
-#
+        """retrieve keyword parameters
+        """
+       
         if ('outpath' in kwargs): 
             self.outpath = kwargs.get('outpath')
 
@@ -1141,9 +1130,9 @@ class Archive:
             for k,v in param.items():
                 logging.debug (f'k, v= {k:s}, {str(v):s}')
 
-#
-#    send url to server to construct the select statement
-#
+        """send url to server to construct the select statement
+        """
+      
         self.format ='votable'
         if ('format' in kwargs): 
             self.format = kwargs.get('format')
@@ -1152,9 +1141,9 @@ class Archive:
         if ('maxrec' in kwargs): 
             self.maxrec = kwargs.get('maxrec')
         
-
-#        datatype = type (self.maxrec).__name__
-#        print (f'datatype= {datatype:s}')
+        """datatype = type (self.maxrec).__name__
+        print (f'datatype= {datatype:s}')
+        """
 
         try:
             self.maxrec = float(self.maxrec)
@@ -1171,11 +1160,11 @@ class Archive:
 
         data = urllib.parse.urlencode (param)
 
-#
-#    retrieve baseurl from conf class;
-#
-#    during dev or test, baseurl will be a keyword input
-#
+        """retrieve baseurl from conf class;
+
+        during dev or test, baseurl will be a keyword input
+        """
+       
         self.baseurl = conf.server
 
         if ('server' in kwargs):
@@ -1185,10 +1174,10 @@ class Archive:
             logging.debug ('')
             logging.debug (f'baseurl= {self.baseurl:s}')
 
-#
-#    urls for nph-tap.py, nph-koaLogin, nph-makeQyery, 
-#    nph-getKoa, and nph-getCaliblist
-#
+        """urls for nph-tap.py, nph-koaLogin, nph-makeQyery, 
+        nph-getKoa, and nph-getCaliblist
+        """
+
         self.tap_url = self.baseurl + 'TAP'
         self.makequery_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidMakequery.py?'
 
@@ -1227,9 +1216,9 @@ class Archive:
         self.query = query
 
 
-#
-#    send tap query
-#
+        """send tap query
+        """
+
         self.tap = None
         if (len(self.cookiepath) > 0):
             
@@ -1379,28 +1368,24 @@ class Archive:
 
         indx = retstr_lower.find ('error')
     
-#        if self.debug:
-#            logging.debug ('')
-#            logging.debug (f'indx= {indx:d}')
-
         if (indx >= 0):
             print (retstr)
             sys.exit()
 
-#
-#    no error: 
-#
+        """no error: 
+        """
+       
         print (retstr)
         return
-    #
-    #} end Archive.query_criteria
-    #
+    
+    """} end Archive.query_criteria
+    """
         
     
+    
+    """{ Archive.query_adql
+    """
     def query_adql (self, query, **kwargs):
-    #
-    #{ Archive.query_adql
-    #
        
         """
         'query_adql' method receives a qualified ADQL query string from
@@ -1492,9 +1477,9 @@ class Archive:
             logging.debug (f'format= {self.format:s}')
             logging.debug (f'maxrec= {self.maxrec:d}')
 
-#
-#    retrieve baseurl from conf class;
-#
+        """retrieve baseurl from conf class;
+        """
+        
         self.baseurl = conf.server
 
         if ('server' in kwargs):
@@ -1504,18 +1489,18 @@ class Archive:
             logging.debug ('')
             logging.debug (f'baseurl= {self.baseurl:s}')
 
-#
-#    urls for nph-tap.py
-#
+        """urls for nph-tap.py
+        """
+
         self.tap_url = self.baseurl + 'TAP'
 
         if self.debug:
             logging.debug ('')
             logging.debug (f'tap_url= [{self.tap_url:s}]')
 
-#
-#    send tap query
-#
+        """send tap query
+        """
+
         self.tap = None
 
         if (len(self.cookiepath) > 0):
@@ -1586,20 +1571,20 @@ class Archive:
             print (retstr)
             sys.exit()
 
-#
-#    no error: 
-#
+        """no error: 
+        """
+
         print (retstr)
         return
-    #
-    #} end Archive.query_adql
-    #
+    
+    """} end Archive.query_adql
+    """
 
 
+    
+    """{ Archive.print_date
+    """
     def print_data (self):
-    #
-    #{ Archive.print_date
-    #
 
 
         if self.debug:
@@ -1614,15 +1599,15 @@ class Archive:
             print (self.msg)
         
         return
-    #
-    #} end Archive.print_date
-    #
+    
+    """} end Archive.print_date
+    """
 
 
+    
+    """{ Archive.download
+    """
     def download (self, metapath, datalevel, format, outdir, **kwargs):
-    #
-    #{ Archive.download
-    #
         """
         The download method allows users to download FITS files shown in 
         the retrieved metadata file.  The column 'filepath' must be included
@@ -1717,15 +1702,16 @@ class Archive:
             logging.debug ('')
             logging.debug (f'cookiepath= {self.cookiepath:s}')
 
-#
-#    token take precedence: only load cookie if token doesn't exist
-#
+        """token take precedence: only load cookie if token doesn't exist
+        """
+
         cookiejar = None
         
         if (len(self.token) == 0):
-#
-# { load cookie to cookiejar 
-#
+
+            """{ load cookie to cookiejar 
+            """
+
             if (len(self.cookiepath) > 0):
    
                 cookiejar = http.cookiejar.MozillaCookieJar (self.cookiepath)
@@ -1753,9 +1739,8 @@ class Archive:
                         logging.debug (f'loadCookie exception: {str(e):s}')
                     pass
 
-#
-# } end load cookie to cookiejar 
-#
+        """} end load cookie to cookiejar 
+        """
 
         fmt_astropy = self.format
         if (self.format == 'tsv'):
@@ -1765,9 +1750,9 @@ class Archive:
         if (self.format == 'ipac'):
             fmt_astropy = 'ascii.ipac'
 
-#
-#    read metadata to astropy table
-#
+        """read metadata to astropy table
+        """
+
         self.astropytbl = None
         try:
             self.astropytbl = Table.read (self.metapath, format=fmt_astropy)
@@ -1879,15 +1864,15 @@ class Archive:
             logging.debug (f'erow= {erow:d}')
      
 
-#
-#    create outdir if it doesn't exist
-#
-#    decimal mode work for both python2.7 and python3;
-#
-#    0755 also works for python 2.7 but not python3
-#  
-#    convert octal 0775 to decimal: 493 
-#
+        """create outdir if it doesn't exist
+
+        decimal mode work for both python2.7 and python3;
+
+        0755 also works for python 2.7 but not python3
+  
+        convert octal 0775 to decimal: 493 
+        """
+
         d1 = int ('0775', 8)
 
         if self.debug:
@@ -1908,9 +1893,9 @@ class Archive:
             logging.debug ('returned os.makedirs') 
 
 
-#
-#    retrieve baseurl from conf class;
-#
+        """retrieve baseurl from conf class;
+        """
+
         self.baseurl = conf.server
 
         if ('server' in kwargs):
@@ -1920,16 +1905,14 @@ class Archive:
             logging.debug ('')
             logging.debug (f'baseurl= {self.baseurl:s}')
 
-#
-#    urls for nph-getKoa, and nph-getCaliblist
-#
+        """urls for nph-getKoa, and nph-getCaliblist
+        """
+
         self.getneid_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidDownload.py?'
-#        self.caliblist_url = self.baseurl+ 'cgi-bin/KoaAPI/nph-getCaliblist?'
 
         if self.debug:
             logging.debug ('')
             logging.debug (f'self.getneid_url= {self.getneid_url:s}')
-#            logging.debug (f'self.caliblist_url= {self.caliblist_url:s}')
 
 
         filename = ''
@@ -1943,9 +1926,9 @@ class Archive:
         print (f'Start downloading {nfile:d} FITS data you requested;')
         print (f'please check your outdir: {self.outdir:s} for  progress.')
  
-#
-# { download srow to erow
-#
+        """{ download srow to erow
+        """
+
         for l in range (srow, erow+1):
        
             if self.debug:
@@ -1978,9 +1961,9 @@ class Archive:
                 logging.debug (f'l= {l:d} filename= {filename:s}')
                 logging.debug (f'filepath= {filepath:s}')
 
-#
-#   get data files
-#
+            """get data files
+            """
+
             url = self.getneid_url + 'datalevel=' + datalevel + \
                 '&filepath=' + '/' + filepath + '&debug=1'
             
@@ -1991,9 +1974,9 @@ class Archive:
                 logging.debug (f'filepath= {filepath:s}')
                 logging.debug (f'url= {url:s}')
 
-#
-#    if file doesn't exist: download
-#
+            """if file doesn't exist: download
+            """
+
             isExist = os.path.exists (filepath)
 	    
             if self.debug:
@@ -2017,10 +2000,9 @@ class Archive:
                     print (f'File [{filename:s}] download: {str(e):s}')
 
 
-#
-#{   if calibfile == 1: download calibfile
-#
-            """
+            """{ comment:  if calibfile == 1: download calibfile code block 
+            for possible caliblist and files download in the future
+
             if (calibfile == 1):
 
                 if self.debug:
@@ -2075,15 +2057,11 @@ class Archive:
                 except Exception as e:
                     print (f'File [{caliblist:s}] download: {str(e):s}')
                 
-            """
 
-#
-#{    check again after caliblist is successfully downloaded, if caliblist 
-#    exists: download calibfiles
-#     
-            """
+            comment: check again after caliblist is successfully downloaded, 
+            if caliblist exists: download calibfiles
+                
                 isExist = os.path.exists (caliblist)
-	  
                                   
                 if (isExist):
 
@@ -2110,42 +2088,40 @@ class Archive:
                             logging.debug ('')
                             logging.debug (f'errmsg= {self.msg:s}')
             
+            } comment: endif (download_calibfiles):
             """
-#
-#} endif (download_calibfiles):
-#
 
-#
-#} endif (calibfile == 1):
-#
-
-#
-#}  endfor l in range (srow, erow+1)
-#
+        """}  endfor l in range (srow, erow+1)
+        """
 
         if self.debug:
             logging.debug ('')
             logging.debug (f'{self.len_tbl:d} files in the table;')
             logging.debug (f'{self.ndnloaded:d} files downloaded.')
             logging.debug (f'{self.ncaliblist:d} calibration list downloaded.')
-#           logging.debug (\
-#               f'{self.ndnloaded_calib:d} calibration files downloaded.')
+
+            """logging.debug (
+            f'{self.ndnloaded_calib:d} calibration files downloaded.')
+            """
 
         print (f'A total of new {self.ndnloaded:d} FITS files downloaded.')
  
-#       if (calibfile == 1):
-#           print (f'{self.ncaliblist:d} new calibration list downloaded.')
-#           print (f'{self.ndnloaded_calib:d} new calibration FITS files downloaded.')
+        """if (calibfile == 1):
+        print (f'{self.ncaliblist:d} new calibration list downloaded.')
+        print (
+        f'{self.ndnloaded_calib:d} new calibration FITS files downloaded.')
+        """
+
         return
-    #
-    #} end Archive.download
-    #
+    
+    """} end Archive.download
+    """
     
 
+    
+    """{ Archive.__submit_request
+    """
     def __submit_request(self, url, filepath, cookiejar):
-    #
-    #{ Archive.__submit_request
-    #
 
         if self.debug:
             logging.debug ('')
@@ -2293,9 +2269,9 @@ class Archive:
                 raise Exception (self.msg)
                 return
 
-#
-#    save to filepath
-#
+        """save to filepath
+        """
+
         if self.debug:
             logging.debug ('')
             logging.debug ('save_to_file:')
@@ -2307,7 +2283,6 @@ class Archive:
                     fd.write (chunk)
             
             self.msg =  'Returned file written to: ' + filepath   
-#            print (self.msg)
             
             if self.debug:
                 logging.debug ('')
@@ -2326,15 +2301,15 @@ class Archive:
             return
 
         return
-    #
-    #} end Archive.__submit_request
-    #
+    
+    """} end Archive.__submit_request
+    """
                        
 
+    
+    """{ Archive.__make_query
+    """
     def __make_query (self, url):
-    #
-    #{ Archive.__make_query
-    #
        
         if self.debug:
             logging.debug ('')
@@ -2373,9 +2348,9 @@ class Archive:
                 logging.debug ('')
                 logging.debug (f'response.text: {response.text:s}')
 
-#
-#    error message
-#
+            """error message
+            """
+
             try:
                 jsondata = json.loads (response.text)
                  
@@ -2416,20 +2391,18 @@ class Archive:
                 raise Exception (self.msg)
             
         return (query)
-    #
-    #}  end Archive.__make_query
-    #
+    
+    """}  end Archive.__make_query
+    """
 
-#
-#}  end class Archive
-#
-
+"""}  end class Archive
+"""
 
 
+
+"""{ objLookup class
+"""
 class objLookup:
-#
-#{ objLookup class
-#
     """
     objLookup wraps ExoPlanet's web name resolver into a python class; 
     the exoLookup checks the exoplanet archive database and if that fails 
@@ -2463,10 +2436,9 @@ class objLookup:
 
     debug = 0
 
+    """{ objLookup.init
+    """
     def __init__ (self, object, **kwargs):
-    #
-    #{ objLookup.init
-    #
 
         self.object = object
 
@@ -2554,9 +2526,10 @@ class objLookup:
        
     
         if (self.status.lower() == 'ok'):
-#
-#{  objLookup OK, extract parameters
         
+            """{  objLookup OK, extract parameters
+            """
+
             if self.debug:
                 logging.debug ('')
                 logging.debug ('xxx1')
@@ -2638,13 +2611,14 @@ class objLookup:
                 logging.debug (f'cra2000= {self.cra2000:s}')
                 logging.debug (f'cdec2000= {self.cdec2000:s}')
 
-#
-#}  end objLookup OK, extract parameters
-#
+            """}  end objLookup OK, extract parameters
+            """
+
         else:
-#
-#{  objLookup Error, extract errmsg
-#
+            
+            """{  objLookup Error, extract errmsg
+            """
+
             if self.debug:
                 logging.debug ('')
                 logging.debug ('xxx2')
@@ -2662,26 +2636,20 @@ class objLookup:
                 self.msg = f'extract msg exception: {str(e):s}'
                 raise Exception (self.msg)
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('got here3')
-        
-    #
-    #}  end extract errmsg
-    #
+            """}  end extract errmsg
+            """
+
         return
-    #
-    #} end objLookup.init
-    #
-#
-#} end objLookup class
-#
+    
+    """} end objLookup.init
+    """
+"""} end objLookup class
+"""
 
 
+"""{ NeidTap class
+"""
 class NeidTap:
-#
-#{ NeidTap class
-#
 
     """
     NeidTap class provides client access to NEID's TAP service.   
@@ -2720,10 +2688,9 @@ class NeidTap:
         debug      -- default is no debug written
     """
 
+    """{ NeidTap.init
+    """
     def __init__ (self, url, **kwargs):
-    #
-    #{ NeidTap.init
-    #
 
         self.url = url 
         
@@ -2745,10 +2712,10 @@ class NeidTap:
         self.status = ''
         self.msg = ''
 
-    #
-    #    tapjob contains async job's status;
-    #    resulttbl is the result of sync saved an astropy table 
-    #
+        """tapjob contains async job's status;
+        resulttbl is the result of sync saved an astropy table 
+        """
+
         self.tapjob = None
         self.astropytbl = None
         
@@ -2798,9 +2765,9 @@ class NeidTap:
             logging.debug (f'cookiepath= {self.cookiepath:s}')
             logging.debug (f'propflag= {self.propflag:d}')
 
-    #
-    #    turn on server debug
-    #   
+        """turn on server debug
+        """
+
         pid = os.getpid()
         self.datadict['request'] = self.request              
         self.datadict['lang'] = self.lang              
@@ -2847,16 +2814,14 @@ class NeidTap:
                 raise Exception (self.msg) 
 
         return 
-    #
-    #} end NeidTap.init
-    #
-
+    
+    """} end NeidTap.init
+    """
        
 
+    """{ NeidTap.send_async
+    """
     def send_async (self, query, **kwargs):
-    #
-    #{ NeidTap.send_async
-    #
 
         debug = 0
 
@@ -2879,9 +2844,9 @@ class NeidTap:
 
         self.datadict['query'] = query 
 
-    #
-    #    for async query, there is no maxrec limit
-    #
+        """for async query, there is no maxrec limit
+        """
+
         self.maxrec = '0'
 
         if ('format' in kwargs):
@@ -2952,9 +2917,9 @@ class NeidTap:
             logging.debug ('')
             logging.debug (f'status_code= {self.response.status_code:d}')
             
-    #
-    #    if status_code != 303: probably error message
-    #
+        """if status_code != 303: probably error message
+        """
+
         if (self.response.status_code != 303):
             
             if debug:
@@ -2976,9 +2941,10 @@ class NeidTap:
             self.msg = ''
            
             if (self.content_type == 'application/json'):
-    #
-    #    error message
-    #
+        
+                """error message
+                """
+
                 if debug:
                     logging.debug ('')
                     logging.debug ('self.response:')
@@ -3015,9 +2981,9 @@ class NeidTap:
                     self.msg = 'Error: ' + data['msg']
                     return (self.msg)
 
-    #
-    #    retrieve statusurl
-    #
+        """retrieve statusurl
+        """
+
         self.statusurl = ''
         if (self.response.status_code == 303):
             self.statusurl = self.response.headers['Location']
@@ -3030,9 +2996,8 @@ class NeidTap:
             self.msg = 'Error: failed to retrieve statusurl from re-direct'
             return (self.msg)
 
-    #
-    #    create tapjob to save status result
-    #
+        """create tapjob to save status result
+        """
         try:
             if (debug):
                 self.tapjob = TapJob (\
@@ -3058,9 +3023,8 @@ class NeidTap:
             
             return (self.msg)    
         
-    #
-    #    loop until job is complete and download the data
-    #
+        """loop until job is complete and download the data
+        """
         
         phase = self.tapjob.phase
         
@@ -3086,9 +3050,8 @@ class NeidTap:
             logging.debug ('here0-2')
             logging.debug (f'phase= {phase:s}')
             
-    #
-    #    phase == 'error'
-    #
+        """phase == 'error'
+        """
         if (phase.lower() == 'error'):
 	   
             self.status = 'error'
@@ -3104,17 +3067,15 @@ class NeidTap:
             logging.debug ('')
             logging.debug ('here2: phase is completed')
             
-    #
-    #   phase == 'completed' 
-    #
+        """phase == 'completed' 
+        """
         self.resulturl = self.tapjob.resulturl
         if debug:
             logging.debug ('')
             logging.debug (f'resulturl= {self.resulturl:s}')
 
-    #
-    #   send resulturl to retrieve result table
-    #
+        """send resulturl to retrieve result table
+        """
         try:
             self.response_result = requests.get (self.resulturl, stream=True)
         
@@ -3134,9 +3095,8 @@ class NeidTap:
             raise Exception (self.msg)    
      
        
-    #
-    # save table to file
-    #
+        """save table to file
+        """
         if (len(self.outpath) > 0):
            
             if debug:
@@ -3151,10 +3111,8 @@ class NeidTap:
 
             return (self.msg)
 
-    #
-    #    outpath is not given: return resulturl
-    #
-        """
+        """outpath is not given: return resulturl
+        
         if (len(self.outpath) == 0):
            
             self.resulturl = self.tapjob.resulturl
@@ -3205,15 +3163,13 @@ class NeidTap:
         return (self.msg) 
         """
 
-    #
-    #} end NeidTap.send_async
-    #
+    """} end NeidTap.send_async
+    """
 
 
+    """{ NeidTap.send_async
+    """
     def send_sync (self, query, **kwargs):
-    #
-    #{ NeidTap.send_async
-    #
 
        
         if self.debug:
@@ -3231,9 +3187,9 @@ class NeidTap:
         self.async_job = 0
         self.datadict['query'] = query
     
-    #
-    #    optional parameters: format, maxrec, self.outpath
-    #
+        """optional parameters: format, maxrec, self.outpath
+        """
+
         self.maxrec = '0'
 
         if ('format' in kwargs):
@@ -3287,12 +3243,12 @@ class NeidTap:
             
             return (self.msg)
 
-    #
-    #    re-direct case not implemented for send_sync
-    #
-    #	if (self.response.status_code == 303):
-    #            self.resulturl = self.response.headers['Location']
-        
+        """re-direct case not implemented for send_sync
+    
+    	if (self.response.status_code == 303):
+                self.resulturl = self.response.headers['Location']
+        """
+
         self.content_type = self.response.headers['Content-type']
         self.encoding = self.response.encoding
 
@@ -3304,9 +3260,9 @@ class NeidTap:
         self.status = ''
         self.msg = ''
         if (self.content_type == 'application/json'):
-    #
-    #    error message
-    #
+    
+            """error message
+            """
             try:
                 data = self.response.json()
             except Exception:
@@ -3324,9 +3280,9 @@ class NeidTap:
                 logging.debug (f'status= {self.status:s}')
                 logging.debug (f'msg= {self.msg:s}')
      
-    #
-    # save table to file
-    #
+        """save table to file
+        """
+
         if self.debug:
             logging.debug ('')
             logging.debug ('got here')
@@ -3339,15 +3295,13 @@ class NeidTap:
 
         return (self.msg)
 
-    #
-    #} end NeidTap.send_sync
-    #
+    """} end NeidTap.send_sync
+    """
 
-
+    
+    """{ NeidTap.save_data: save data to astropy table
+    """
     def save_data (self, outpath):
-    #
-    #{ NeidTap.save_data: save data to astropy table
-    #
 
         if self.debug:
             logging.debug ('')
@@ -3396,9 +3350,10 @@ class NeidTap:
                 
             self.msg = 'Result downloaded to file [' + self.outpath + ']'
         else:
-    #
-    #    read temp outpath to astropy table
-    #
+    
+            """read temp outpath to astropy table
+            """
+
             if self.debug:
                 logging.debug ('')
                 logging.debug (f'xxx2')
@@ -3418,15 +3373,14 @@ class NeidTap:
                 logging.debug ('tmpfile {fpath:s} deleted')
 
         return (self.msg)
-    #
-    #} end NeidTap.save_data
-    #
+    
+    """} end NeidTap.save_data
+    """
 
 
+    """{ NeidTap.print_data: use astropy function to print data
+    """
     def print_data (self):
-    #
-    #{ NeidTap.print_data: use astropy function to print data
-    #
 
         if self.debug:
             logging.debug ('')
@@ -3455,20 +3409,17 @@ class NeidTap:
 
         return
 
-    #
-    #} end NeidTap.print_data
-    #
+    """} end NeidTap.print_data
+    """
 
 
-#
-#    outpath is given: loop until job is complete and download the data
-#
+    """{ NeidTap.get_data
+    """
     def get_data (self, resultpath):
-    #
-    #{ NeidTap.get_data: loop until job is complete, then download the data to
-    #                    the given outpath
-    #
-
+    
+        """ loop until job is complete, then download the data to the 
+        given resultpath
+        """
         if self.debug:
             logging.debug ('')
             logging.debug ('Enter get_data:')
@@ -3478,9 +3429,9 @@ class NeidTap:
 
 
         if (self.async_job == 0):
-    #
-    #    sync data is in astropytbl
-    #
+    
+            """sync data is in astropytbl
+            """
             self.astropytbl.write (resultpath)
 
             if self.debug:
@@ -3506,9 +3457,8 @@ class NeidTap:
                     logging.debug (\
                         f'returned tapjob.get_phase: phase= {phase:s}')
 
-    #
-    #    phase == 'error'
-    #
+            """ phase == 'error'
+            """
             if (phase.lower() == 'error'):
 	   
                 self.status = 'error'
@@ -3520,9 +3470,8 @@ class NeidTap:
             
                 return (self.msg)
 
-    #
-    #   job completed write table to disk file
-    #
+            """job completed write table to disk file
+            """
             try:
                 self.tapjob.get_result (resultpath)
 
@@ -3553,31 +3502,26 @@ class NeidTap:
             logging.debug (f'self.msg = {self.msg:s}')
        
         return (self.msg) 
-    #
-    #} end NeidTap.get_data
-    #
+    
+        """} end NeidTap.get_data
+        """
 
-#
-#} end NeidTap class
-#
+"""} end NeidTap class
+"""
 
 
+"""{ TapJob class
+"""
 class TapJob:
-#
-#{ TapJob class
-#
 
     """
     TapJob class is used internally by TapClient class to store a Tap job's 
     parameters and returned job status and result urls.
     """
 
+    """{ TapJob.init
+    """
     def __init__ (self, statusurl, **kwargs):
-    #
-    #{ TapJob.init
-    #
-
-
         self.debug = 0 
         
         self.statusurl = statusurl
@@ -3633,18 +3577,15 @@ class TapJob:
             logging.debug ('done TapJob.init:')
 
         return     
-    #
-    #} end TapJob.init
-    #
-
+    
+    """} end TapJob.init
+    """ 
     
    
+    """{ TapJob.get_status
+    """
     def get_status (self):
-    #
-    #{ TapJob.get_status
-    #
-
-
+        
         if self.debug:
             logging.debug ('')
             logging.debug ('Enter get_status')
@@ -3673,18 +3614,16 @@ class TapJob:
                 raise Exception (self.msg)   
 
         return (self.statusstruct)
-    #
-    #} end TapJob.get_status
-    #
+    
+    """} end TapJob.get_status
+    """
 
 
 
+    """{ TapJob.get_resulturl
+    """
     def get_resulturl (self):
-    #
-    #{ TapJob.get_resulturl
-    #
-
-
+        
         if self.debug:
             logging.debug ('')
             logging.debug ('Enter get_resulturl')
@@ -3713,17 +3652,16 @@ class TapJob:
                 raise Exception (self.msg)   
 
         return (self.resulturl)
-    #
-    #} end TapJob.get_resulturl
-    #
+    
+    """} end TapJob.get_resulturl
+    """
 
 
 
+    """{ TapJob.get_result
+    """
     def get_result (self, outpath):
-    #
-    #{ TapJob.get_result
-    #
-
+        
         if self.debug:
             logging.debug ('')
             logging.debug ('Enter get_result')
@@ -3765,9 +3703,8 @@ class TapJob:
             raise Exception (self.msg)    
 	    
 
-#
-#   send resulturl to retrieve result table
-#
+        """send resulturl to retrieve result table
+        """
         try:
             response = requests.get (self.resulturl, stream=True)
         
@@ -3786,19 +3723,20 @@ class TapJob:
             
             raise Exception (self.msg)    
      
-#
-# retrieve table from response
-#
+        """retrieve table from response
+        """
         with open (outpath, "wb") as fp:
             
             for data in response.iter_content(4096):
                 
                 len_data = len(data)            
-            
-#                if debug:
-#                    logging.debug ('')
-#                    logging.debug (f'len_data= {len_data:d}')
- 
+
+                """comment block
+                if debug:
+                    logging.debug ('')
+                    logging.debug (f'len_data= {len_data:d}')
+                """
+
                 if (len_data < 1):
                     break
 
@@ -3814,9 +3752,9 @@ class TapJob:
             logging.debug ('done writing result to file')
             
         return        
-    #
-    #} end TapJob.get_result
-    #
+    
+    """} end TapJob.get_result
+    """
 
     
     def get_parameters (self):
@@ -4029,10 +3967,9 @@ class TapJob:
         return (self.destruction)
     
    
+    """{ TapJob.get_errorsummary
+    """
     def get_errorsummary (self):
-    #
-    #{ TapJob.get_errorsummary
-    #
 
         if self.debug:
             logging.debug ('')
@@ -4090,24 +4027,22 @@ class TapJob:
                 logging.debug (f'errorsummary= {self.errorsummary:s}')
 
             return (self.errorsummary)
-    #    
-    #}  end TapJob.get_errorsummary
-    #
+    
+    """}  end TapJob.get_errorsummary
+    """
    
 
+    """{ TapJob.get_statusjob
+    """
     def __get_statusjob (self):
-    #
-    #{ TapJob.get_statusjob
-    #
 
         if self.debug:
             logging.debug ('')
             logging.debug ('Enter __get_statusjob')
             logging.debug (f'statusurl= {self.statusurl:s}')
 
-#
-#   self.status doesn't exist, call get_status
-#
+        """ self.status doesn't exist, call get_status
+        """
         try:
             self.response = requests.get (self.statusurl, stream=True)
             
@@ -4143,9 +4078,8 @@ class TapJob:
             logging.debug ('statusstruct= ')
             logging.debug (self.statusstruct)
         
-#
-#    parse returned status xml structure for parameters
-#
+        """ parse returned status xml structure for parameters
+        """
         soup = bs.BeautifulSoup (self.statusstruct, 'lxml')
             
         if self.debug:
@@ -4160,9 +4094,8 @@ class TapJob:
             logging.debug (self.parameters)
         
         
-#
-#    convert status xml structure to dictionary doc 
-#
+        """convert status xml structure to dictionary doc 
+        """
         doc = xmltodict.parse (self.response.text)
         self.job = doc['uws:job']
 
@@ -4209,13 +4142,12 @@ class TapJob:
             logging.debug (f'self.resulturl: {self.resulturl:s}')
 
         return
-    #    
-    #}  end TapJob.__get_statusjob
-    #
     
-#
-#} end TapJob class
-#
+    """}  end TapJob.__get_statusjob
+    """
+    
+"""} end TapJob class
+"""
 
 Neid = Archive()
 print ('Neid instantiated')
