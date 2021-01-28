@@ -1,7 +1,7 @@
 NEID Table Access Protocol (TAP) Client
 ======================================
 
-*This repository is currently in alpha release. Features may be broken or missing. Please report any bugs to neid-help@ipac.caltech.edu*
+**This repository is currently in alpha release. Features may be broken or missing. Please report any bugs to neid-help@ipac.caltech.edu**
 
 Contributions are welcome! If you wish to contribute code please create a fork and submit a pull request with a good description of the proposed changes.
 
