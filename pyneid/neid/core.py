@@ -110,7 +110,8 @@ class Archive:
                 logging.debug ('')
                 logging.debug (f'baseurl= {self.baseurl:s}')
 
-        """urls for nph-tap.py, nph-neidLogin, nph-makeQyery, nph-neidDownload
+        """urls for nph-tap.py, nph-neidLogin, nph-neidMakeQyery, 
+            nph-neidDownload
         """
 
         self.tap_url = self.baseurl + '/TAP'
@@ -164,15 +165,15 @@ class Archive:
         
         Calling synopsis: 
     
-        koa.login (userid='xxxx', password='xxxxxx', cookiepath=cookiepath), or
+        neid.login (userid='xxxx', password='xxxxxx', cookiepath=cookiepath), or
         
-        koa.login (userid='xxxx', password='xxxxxx', token=token_string), or
+        neid.login (userid='xxxx', password='xxxxxx', token=token_string), or
 
 
-        koa.login (cookiepath=cookiepath): and the program will prompt for 
+        neid.login (cookiepath=cookiepath): and the program will prompt for 
                                  userid and password 
         
-        koa.login (): and the program will prompt for userid and password 
+        neid.login (): and the program will prompt for userid and password 
         """
 
         if (self.debug == 0):
@@ -388,9 +389,7 @@ class Archive:
         
         Required Position Inputs:
         ---------------    
-        datalevel (string): l0, l1, l2, and eng representing level1, level2,
-            level3, and engineer data.
-
+        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
         datetime (string): a datetime string in the format of 
             datetime1/datetime2 where '/' separates the two datetime values` 
             of format 'yyyy-mm-dd hh:mm:ss'
@@ -514,7 +513,8 @@ class Archive:
         Required Inputs:
         ---------------    
 
-        datalevel (string): HIRES
+        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
+        datetime (string): a datetime string in the format of 
 
         position (string): a position string in the format of 
 	
@@ -616,12 +616,12 @@ class Archive:
     def query_object (self, datalevel, object, **kwargs):
         
         """
-        'query_object_name' method search NEID data by 'object name' 
+        'query_object' method search NEID data by 'object name' 
         
         Required Inputs:
         ---------------    
 
-        datalevel: HIRES
+        datalevel: l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
 
         object (string): an object name resolvable by SIMBAD, NED, and
             ExoPlanet's name_resolve; 
@@ -806,6 +806,121 @@ class Archive:
     """
 
 
+    """{ Archive.query_qobject
+    """
+    def query_qobject (self, datalevel, qobject, **kwargs):
+        
+        """
+        'query_qobject' method search NEID data for 'qobject' column value
+        
+        Required Inputs:
+        ---------------    
+
+        datalevel: l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
+
+        qobject (string): an object name resolvable by SIMBAD, NED, and
+            ExoPlanet's name_resolve; 
+       
+        This method resolves the object name into coordiates to be used as the
+	center of the circle position search with default radius of 0.5 deg.
+
+        e.g. 
+            datalevel = 'l0',
+            qobject = 'HD 10700'
+
+        Optional Input:
+        ---------------    
+        outpath (string): a full output filepath of the returned metadata 
+            table
+      
+        For searching proprietary NEID data, either the cookiepath or 
+        the token string saved from "login" is needed:  
+
+        cookiepath (string): a full cookie file path saved from login for 
+            querying the proprietary NEID data.
+        
+        token (string): a token string save in memory from login for querying 
+            the proprietary NEID data; the token is only valid for the 
+            current session.
+      
+        
+	format (string):  Output format: votable, ipac, csv, tsv (default: ipac)
+
+        radius (float) = 1.0 (deg)
+
+	maxrec (integer):  maximum records to be returned 
+	         default: -1 or not specified will return all requested records
+        """
+   
+        if (self.debug == 0):
+
+            if ('debugfile' in kwargs):
+            
+                self.debug = 1
+                self.debugfname = kwargs.get ('debugfile')
+
+                if (len(self.debugfname) > 0):
+      
+                    logging.basicConfig (filename=self.debugfname, \
+                        level=logging.DEBUG)
+    
+                    with open (self.debugfname, 'w') as fdebug:
+                        pass
+
+            if self.debug:
+                logging.debug ('')
+                logging.debug ('debug turned on')
+        
+        if self.debug:
+            logging.debug ('')
+            logging.debug ('')
+            logging.debug ('Enter query_object_name:')
+
+        datalevel = str(datalevel)
+
+        if (len(datalevel) == 0):
+            print ('Failed to find required parameter: datalevel')
+            return
+ 
+        if (len(qobject) == 0):
+            print ('Failed to find required parameter: qobject')
+            return
+
+        self.datalevel = datalevel
+        self.qobject = qobject
+
+        if self.debug:
+            logging.debug ('')
+            logging.debug (f'datalevel= {self.datalevel:s}')
+            logging.debug (f'qobject= {self.qobject:s}')
+
+        radius = 0.5 
+        if ('radius' in kwargs):
+            radiusi_str = kwargs.get('radius')
+            radius = float(radius_str)
+
+        if self.debug:
+            logging.debug ('')
+            logging.debug (f'radius= {radius:f}')
+
+ 
+        """send url to server to construct the select statement
+        """
+       
+        param = dict()
+        
+        param['datalevel'] = self.datalevel
+        param['qobject'] = self.qobject
+
+        self.query_criteria (param, **kwargs)
+
+        return
+    
+    """} end  Archive.query_object
+    """
+
+
+
     """{ Archive.query_piname
     """
     def query_piname (self, datalevel, piname, **kwargs):
@@ -816,7 +931,8 @@ class Archive:
         Required Inputs:
         ---------------    
 
-        datalevel: l0, l1, l2, eng 
+        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
+        datetime (string): a datetime string in the format of 
 
         piname (string): PI name as formated in the project's catalog 
        
@@ -915,7 +1031,8 @@ class Archive:
         Required Inputs:
         ---------------    
 
-        datalevel: l0, l1, l2, eng 
+        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
+        datetime (string): a datetime string in the format of 
 
         program (string): program ID in the project's catalog 
        
@@ -1016,25 +1133,24 @@ class Archive:
 
         param: a dictionary containing a list of acceptable parameters:
 
-            datalevel (required): l0, l1, l2, eng 
-
-            datetime (string): a datetime range string in the format of 
-                datetime1/datetime2, '/' being the separator between first
-                and second dateetime valaues.  
-	        where datetime format is 'yyyy-mm-dd hh:mm:ss'
+        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
+        datetime (string): a datetime range string in the format of 
+            datetime1/datetime2, '/' being the separator between first
+            and second dateetime valaues.  
+	    where datetime format is 'yyyy-mm-dd hh:mm:ss'
             
-            position(string): a position string in the format of 
+        position(string): a position string in the format of 
 	
-	        1.  circle ra dec radius;
+	    1.  circle ra dec radius;
 	
-	        2.  polygon ra1 dec1 ra2 dec2 ra3 dec3 ra4 dec4;
+	    2.  polygon ra1 dec1 ra2 dec2 ra3 dec3 ra4 dec4;
 	
-	        3.  box ra dec width height;
+	    3.  box ra dec width height;
 	
-	        all in ra dec in J2000 coordinate.
+	    all in ra dec in J2000 coordinate.
              
-	    target (string): target name used in the project (qobject), 
-                this will be searched against the database.
+	target (string): target name used in the project (qobject), 
+            this will be searched against the database.
 
 
         Optional parameters:
@@ -1174,8 +1290,8 @@ class Archive:
             logging.debug ('')
             logging.debug (f'baseurl= {self.baseurl:s}')
 
-        """urls for nph-tap.py, nph-koaLogin, nph-makeQyery, 
-        nph-getKoa, and nph-getCaliblist
+        """urls for nph-tap.py, nph-neidLogin, nph-neidMakeQyery, 
+        nph-neidDownload
         """
 
         self.tap_url = self.baseurl + 'TAP'
@@ -1589,7 +1705,7 @@ class Archive:
 
         if self.debug:
             logging.debug ('')
-            logging.debug ('Enter koa.print_data:')
+            logging.debug ('Enter neid.print_data:')
 
         try:
             self.tap.print_data ()
@@ -1618,7 +1734,8 @@ class Archive:
 	metapath (string): a full path metadata table obtained from running
 	          query methods    
         
-	datalevel (string): l0, l1, l2, or eng data
+        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
+        datetime (string): a datetime range string in the format of 
 	
         format (string):   metasata table's format: ipac, votable, csv, or tsv.
 	
@@ -1826,8 +1943,9 @@ class Archive:
             raise Exception (msg)
 
     
-        """
         calibfile = 0 
+        
+        """
         if ('calibfile' in kwargs): 
             calibfile = kwargs.get('calibfile')
          
@@ -1905,7 +2023,7 @@ class Archive:
             logging.debug ('')
             logging.debug (f'baseurl= {self.baseurl:s}')
 
-        """urls for nph-getKoa, and nph-getCaliblist
+        """urls for nph-neidDownload.py
         """
 
         self.getneid_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidDownload.py?'
@@ -2001,7 +2119,8 @@ class Archive:
 
 
             """{ comment:  if calibfile == 1: download calibfile code block 
-            for possible caliblist and files download in the future
+            for possible caliblist and files download in the future;
+            it is not implemented at this time.
 
             if (calibfile == 1):
 
@@ -2009,19 +2128,19 @@ class Archive:
                     logging.debug ('')
                     logging.debug ('calibfile=1: downloading calibfiles')
 	    
-                koaid_base = '' 
+                filename_base = '' 
                 ind = -1
-                ind = koaid.rfind ('.')
+                ind = filenameid.rfind ('.')
                 if (ind > 0):
-                    koaid_base = koaid[0:ind]
+                    filename_base = filename[0:ind]
                 else:
-                    koaid_base = koaid
+                    filename_base = filename
 
                 if self.debug:
                     logging.debug ('')
-                    logging.debug (f'koaid_base= {koaid_base:s}')
+                    logging.debug (f'filename_base= {filename_base:s}')
 	    
-                caliblist = self.outdir + '/' + koaid_base + '.caliblist.json'
+                caliblist = self.outdir + '/' + filename_base + '.caliblist.json'
                 
                 if self.debug:
                     logging.debug ('')
@@ -2037,7 +2156,7 @@ class Archive:
 	    
                     url = self.caliblist_url \
                         + 'datalevel=' + datalevel \
-                        + '&koaid=' + koaid
+                        + '&filename=' + filename
 
                     if self.debug:
                         logging.debug ('')
