@@ -10,7 +10,7 @@ class Conf (_config.ConfigNamespace):
     Configuration parameters for 'astroquery.koa'.
     """
     server = _config.ConfigItem (
-        ['https://neid.ipac.caltech.edu/cgi-bin/'],
+        ['https://neid.ipac.caltech.edu/'],
         'Name of the NEID server to use.') 
 
     timeout = _config.ConfigItem (
