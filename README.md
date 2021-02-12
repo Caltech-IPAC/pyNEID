@@ -17,4 +17,6 @@ query support for a few common use cases (e.g. query by proposal ID).
 In addition, it supports proprietary access using standard session
 cookies and a separate login service.
 
-This software is written in pure Python 3.  
+The package can be installed from PiPy: `pip install pyneid`
+
+This software is written in pure Python 3.
