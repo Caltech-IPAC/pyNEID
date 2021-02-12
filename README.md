@@ -3,6 +3,14 @@ NEID Table Access Protocol (TAP) Client
 
 **This repository is currently in alpha release. Features may be broken or missing. Please report any bugs to neid-help@ipac.caltech.edu**
 
+This package provides API access to the NEID Archive: neid.ipac.caltech.edu
+
+With pyNEID you can:
+  - log in using your NEID Archive credentials, or use without login for access to public data only
+  - query the archive for tables of L0, L1, and L2 metadata
+  - download FITS files of any level
+  - more features to come...
+
 Contributions are welcome! If you wish to contribute code please create a fork and submit a pull request with a good description of the proposed changes.
 
 The NEID Table Access Protocol service is a general tool for making 
