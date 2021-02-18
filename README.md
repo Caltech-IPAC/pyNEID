@@ -5,6 +5,8 @@ NEID Table Access Protocol (TAP) Client
 
 This package provides API access to the NEID Archive: neid.ipac.caltech.edu
 
+The package can be installed from PiPy: `pip install pyneid`
+
 With pyNEID you can:
   - log in using your NEID Archive credentials, or use without login for access to public data only
   - query the archive for tables of L0, L1, and L2 metadata
@@ -25,6 +27,4 @@ query support for a few common use cases (e.g. query by proposal ID).
 In addition, it supports proprietary access using standard session
 cookies and a separate login service.
 
-The package can be installed from PiPy: `pip install pyneid`
-
-This software is written in pure Python 3.
+This software is written in Python 3.
