@@ -1,0 +1,4 @@
+xmltodict
+bs4
+requests
+astropy
