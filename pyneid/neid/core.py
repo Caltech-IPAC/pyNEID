@@ -88,12 +88,11 @@ class Archive:
     
                 with open (self.debugfname, 'w') as fdebug:
                     pass
+        else:
+            self.debug = 0
+            logging.basicConfig(filename=self.debugfname, level=logging.INFO)
  
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('Enter Archive.init:')
-
-
+        logging.debug ('Enter Archive.init:')
 
         """retrieve baseurl from conf class;
         during dev or test, baseurl will be a keyword input
@@ -106,9 +105,7 @@ class Archive:
         if ('server' in kwargs):
             self.baseurl = kwargs.get ('server')
 
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'baseurl= {self.baseurl:s}')
+        logging.debug (f'baseurl= {self.baseurl:s}')
 
         """urls for nph-tap.py, nph-neidLogin, nph-neidMakeQyery, 
             nph-neidDownload
@@ -119,12 +116,10 @@ class Archive:
         self.makequery_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidMakequery.py?'
         self.getneid_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidDownload.py?'
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'login_url= [{self.login_url:s}]')
-            logging.debug (f'tap_url= [{self.tap_url:s}]')
-            logging.debug (f'makequery_url= [{self.makequery_url:s}]')
-            logging.debug (f'self.getneid_url= {self.getneid_url:s}')
+        logging.debug (f'login_url= [{self.login_url:s}]')
+        logging.debug (f'tap_url= [{self.tap_url:s}]')
+        logging.debug (f'makequery_url= [{self.makequery_url:s}]')
+        logging.debug (f'self.getneid_url= {self.getneid_url:s}')
       
         return
     
@@ -191,16 +186,12 @@ class Archive:
                     with open (self.debugfname, 'w') as fdebug:
                         pass
 
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('debug turned on')
-        
- 
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('')
-            logging.debug ('Enter login:')
+            logging.debug ('debug turned on')
+        else:
+            logging.basicConfig(level=logging.INFO)
 
+
+        logging.debug ('Enter login:')
 
         userid= ''
         password = ''
@@ -210,10 +201,8 @@ class Archive:
         if ('password' in kwargs):
             password = kwargs.get ('password')
         
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'userid= [{userid:s}]')
-            logging.debug (f'password= [{password:s}]')
+        logging.debug (f'userid= [{userid:s}]')
+        logging.debug (f'password= [{password:s}]')
 
         url = ''
         response = ''
@@ -221,7 +210,6 @@ class Archive:
 
         self.status = ''
         self.msg = ''
-
 
         """get userid and password via keyboard input
         """
@@ -232,22 +220,12 @@ class Archive:
         if (len(password) == 0):
             password = getpass.getpass ("Password: ")
 
-        """hide debug password printout
-        password = urllib.parse.quote (password)
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'password= {password:s}')
-        """
-
         """retrieve baseurl from conf class;
         """ 
         
         self.baseurl = conf.server
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'baseurl (from conf)= {self.baseurl:s}')
-        
+        logging.debug (f'baseurl (from conf)= {self.baseurl:s}')
 
         """retrieve cookiepath
         """
@@ -255,9 +233,7 @@ class Archive:
         if ('cookiepath' in kwargs):
             self.cookiepath = kwargs.get ('cookiepath')
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'cookiepath= {self.cookiepath:s}')
+        logging.debug (f'cookiepath= {self.cookiepath:s}')
 
         """construct full url for login
         """
@@ -265,15 +241,11 @@ class Archive:
         if ('server' in kwargs):
             self.baseurl = kwargs.get ('server')
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'baseurl= {self.baseurl:s}')
+        logging.debug (f'baseurl= {self.baseurl:s}')
 
         self.login_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidLogin.py?'
         
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'login_url= [{self.login_url:s}]')
+        logging.debug (f'login_url= [{self.login_url:s}]')
 
         param = dict()
         param['userid'] = userid
@@ -283,17 +255,12 @@ class Archive:
     
         url = self.login_url + data_encoded
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'url= [{url:s}]')
-
+        logging.debug (f'url= [{url:s}]')
 
         """cookiejar declared and linked to cookiepath
         """
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('declare request session with cookie')
+        logging.debug ('declare request session with cookie')
         
         session = requests.Session()
         session.cookies = http.cookiejar.MozillaCookieJar (self.cookiepath)
@@ -309,12 +276,10 @@ class Archive:
             print (self.msg)
             return
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('response.text: ')
-            logging.debug (response.text)
-            logging.debug ('response.headers: ')
-            logging.debug (response.headers)
+        logging.debug ('response.text: ')
+        logging.debug (response.text)
+        logging.debug ('response.headers: ')
+        logging.debug (response.headers)
        
         """check content-type in response header: 
         it should be an 'application/json' structure, parse for returned 
@@ -323,9 +288,7 @@ class Archive:
 
         contenttype = response.headers['Content-type']
         
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'contenttype= {contenttype:s}')
+        logging.debug (f'contenttype= {contenttype:s}')
 
         jsondata = json.loads (response.text);
    
@@ -341,12 +304,10 @@ class Archive:
                 self.token =  val
        
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'status= {self.status:s}')
-            logging.debug (f'msg= {self.msg:s}')
-            logging.debug (f'token= {self.token:s}')
-            logging.debug (f'cookiepath= {self.cookiepath:s}')
+        logging.debug (f'status= {self.status:s}')
+        logging.debug (f'msg= {self.msg:s}')
+        logging.debug (f'token= {self.token:s}')
+        logging.debug (f'cookiepath= {self.cookiepath:s}')
 
 
         if (self.status == 'ok'):
@@ -362,14 +323,13 @@ class Archive:
                 """print out cookie values in debug file
                 """
 
-                if self.debug:
-                    for cookie in cookiejar:
-                        logging.debug ('')
-                        logging.debug ('cookie saved:')
-                        logging.debug (cookie)
-                        logging.debug (f'cookie.name= {cookie.name:s}')
-                        logging.debug (f'cookie.value= {cookie.value:s}')
-                        logging.debug (f'cookie.domain= {cookie.domain:s}')
+                for cookie in cookiejar:
+                    logging.debug ('')
+                    logging.debug ('cookie saved:')
+                    logging.debug (cookie)
+                    logging.debug (f'cookie.name= {cookie.name:s}')
+                    logging.debug (f'cookie.value= {cookie.value:s}')
+                    logging.debug (f'cookie.domain= {cookie.domain:s}')
  
         else:       
             self.msg = 'Failed to login: ' + self.msg
@@ -455,14 +415,12 @@ class Archive:
                     with open (self.debugfname, 'w') as fdebug:
                         pass
 
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('debug turned on')
+            logging.debug ('debug turned on')
         
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('')
-            logging.debug ('Enter query_datetime:')
+        else:
+            logging.basicConfig (filename=self.debugfname, level=logging.INFO)
+        
+        logging.debug ('Enter query_datetime:')
        
         datalevel = str(datalevel)
 
@@ -479,10 +437,8 @@ class Archive:
         self.datalevel = datalevel
         self.datetime = datetime
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'datalevel= {self.datalevel:s}')
-            logging.debug (f'datetime= {self.datetime:s}')
+        logging.debug (f'datalevel= {self.datalevel:s}')
+        logging.debug (f'datetime= {self.datetime:s}')
 
         """send url to server to construct the select statement
         """
@@ -491,9 +447,7 @@ class Archive:
         param['datalevel'] = self.datalevel
         param['datetime'] = self.datetime
         
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('call query_criteria')
+        logging.debug ('call query_criteria')
 
         self.query_criteria (param, **kwargs)
 
@@ -567,14 +521,9 @@ class Archive:
                     with open (self.debugfname, 'w') as fdebug:
                         pass
 
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('debug turned on')
+            logging.debug ('debug turned on')
         
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('')
-            logging.debug ('Enter query_position:')
+        logging.debug ('Enter query_position:')
       
         
         datalevel = str(datalevel)
@@ -591,10 +540,8 @@ class Archive:
         self.datalevel = datalevel
         self.position = position
  
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'datalevel=  {self.datalevel:s}')
-            logging.debug (f'position=  {self.position:s}')
+        logging.debug (f'datalevel=  {self.datalevel:s}')
+        logging.debug (f'position=  {self.position:s}')
 
         """send url to server to construct the select statement
         """
@@ -672,14 +619,9 @@ class Archive:
                     with open (self.debugfname, 'w') as fdebug:
                         pass
 
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('debug turned on')
+            logging.debug ('debug turned on')
         
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('')
-            logging.debug ('Enter query_object_name:')
+        logging.debug ('Enter query_object_name:')
 
         datalevel = str(datalevel)
 
@@ -694,65 +636,22 @@ class Archive:
         self.datalevel = datalevel
         self.object = object
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'datalevel= {self.datalevel:s}')
-            logging.debug (f'object= {self.object:s}')
+        logging.debug (f'datalevel= {self.datalevel:s}')
+        logging.debug (f'object= {self.object:s}')
 
         radius = 0.5 
         if ('radius' in kwargs):
             radiusi_str = kwargs.get('radius')
             radius = float(radius_str)
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'radius= {radius:f}')
-
-        """
-        coords = None
-        try:
-            print (f'resolving object name')
- 
-            coords = name_resolve.get_icrs_coordinates (object)
-        
-        except Exception as e:
-
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'name_resolve error: {str(e):s}')
-            
-            print (str(e))
-            return
-
-        ra = coords.ra.value
-        dec = coords.dec.value
-        
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'ra= {ra:f}')
-            logging.debug (f'dec= {dec:f}')
-        
-        self.position = 'circle ' + str(ra) + ' ' + str(dec) \
-            + ' ' + str(radius)
-	
-        """
+        logging.debug (f'radius= {radius:f}')
 
         lookup = None
         try:
-            if self.debug:
-                lookup = objLookup (object, debug=1)
-            else:
-                lookup = objLookup (object)
-        
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('objLookup run successful and returned')
-        
+            lookup = objLookup(object, debug=self.debug)
+            logging.debug ('objLookup run successful and returned')
         except Exception as e:
-
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'objLookup error: {str(e):s}')
+            logging.debug (f'objLookup error: {str(e):s}')
             
             print (str(e))
             return 
@@ -765,30 +664,24 @@ class Archive:
             print (self.msg)
             return
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'source= {lookup.source:s}')
-            logging.debug (f'objname= {lookup.objname:s}')
-            logging.debug (f'objtype= {lookup.objtype:s}')
-            logging.debug (f'objdesc= {lookup.objdesc:s}')
-            logging.debug (f'parsename= {lookup.parsename:s}')
-            logging.debug (f'ra2000= {lookup.ra2000:s}')
-            logging.debug (f'dec2000= {lookup.dec2000:s}')
-            logging.debug (f'cra2000= {lookup.cra2000:s}')
-            logging.debug (f'cdec2000= {lookup.cdec2000:s}')
-
+        logging.debug (f'source= {lookup.source:s}')
+        logging.debug (f'objname= {lookup.objname:s}')
+        logging.debug (f'objtype= {lookup.objtype:s}')
+        logging.debug (f'objdesc= {lookup.objdesc:s}')
+        logging.debug (f'parsename= {lookup.parsename:s}')
+        logging.debug (f'ra2000= {lookup.ra2000:s}')
+        logging.debug (f'dec2000= {lookup.dec2000:s}')
+        logging.debug (f'cra2000= {lookup.cra2000:s}')
+        logging.debug (f'cdec2000= {lookup.cdec2000:s}')
        
         ra2000 = lookup.ra2000
         dec2000 = lookup.dec2000
 
         self.position = 'circle ' + ra2000 + ' ' + dec2000 + ' ' + str(radius)
 	
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'position= {self.position:s}')
+        logging.debug (f'position= {self.position:s}')
        
         print (f'object name resolved: ra2000= {ra2000:s}, de2000c={dec2000:s}')
- 
  
         """send url to server to construct the select statement
         """
@@ -867,14 +760,9 @@ class Archive:
                     with open (self.debugfname, 'w') as fdebug:
                         pass
 
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('debug turned on')
+            logging.debug ('debug turned on')
         
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('')
-            logging.debug ('Enter query_object_name:')
+        logging.debug ('Enter query_object_name:')
 
         datalevel = str(datalevel)
 
@@ -889,19 +777,15 @@ class Archive:
         self.datalevel = datalevel
         self.qobject = qobject
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'datalevel= {self.datalevel:s}')
-            logging.debug (f'qobject= {self.qobject:s}')
+        logging.debug (f'datalevel= {self.datalevel:s}')
+        logging.debug (f'qobject= {self.qobject:s}')
 
         radius = 0.5 
         if ('radius' in kwargs):
             radiusi_str = kwargs.get('radius')
             radius = float(radius_str)
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'radius= {radius:f}')
+        logging.debug (f'radius= {radius:f}')
 
  
         """send url to server to construct the select statement
@@ -977,14 +861,9 @@ class Archive:
                     with open (self.debugfname, 'w') as fdebug:
                         pass
 
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('debug turned on')
+            logging.debug ('debug turned on')
         
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('')
-            logging.debug ('Enter query_piname:')
+        logging.debug ('Enter query_piname:')
 
         datalevel = str(datalevel)
 
@@ -999,10 +878,8 @@ class Archive:
         self.datalevel = datalevel
         self.piname = piname 
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'datalevel= {self.datalevel:s}')
-            logging.debug (f'piname= {self.piname:s}')
+        logging.debug (f'datalevel= {self.datalevel:s}')
+        logging.debug (f'piname= {self.piname:s}')
 
         
         """send url to server to construct the select statement
@@ -1077,14 +954,9 @@ class Archive:
                     with open (self.debugfname, 'w') as fdebug:
                         pass
 
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('debug turned on')
+            logging.debug ('debug turned on')
         
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('')
-            logging.debug ('Enter query_program:')
+        logging.debug ('Enter query_program:')
 
         datalevel = str(datalevel)
 
@@ -1099,10 +971,8 @@ class Archive:
         self.datalevel = datalevel
         self.program = program 
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'datalevel= {self.datalevel:s}')
-            logging.debug (f'program= {self.program:s}')
+        logging.debug (f'datalevel= {self.datalevel:s}')
+        logging.debug (f'program= {self.program:s}')
 
         
         """send url to server to construct the select statement
@@ -1191,15 +1061,9 @@ class Archive:
                     with open (self.debugfname, 'w') as fdebug:
                         pass
 
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('debug turned on')
+            logging.debug ('debug turned on')
         
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('')
-            logging.debug ('Enter query_criteria')
-        
+        logging.debug ('Enter query_criteria')
         
         """retrieve keyword parameters
         """
@@ -1207,23 +1071,17 @@ class Archive:
         if ('outpath' in kwargs): 
             self.outpath = kwargs.get('outpath')
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'outpath= {self.outpath:s}')
+        logging.debug (f'outpath= {self.outpath:s}')
         
         if ('cookiepath' in kwargs): 
             self.cookiepath = kwargs.get('cookiepath')
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'cookiepath= {self.cookiepath:s}')
+        logging.debug (f'cookiepath= {self.cookiepath:s}')
 
         if ('token' in kwargs): 
             self.token = kwargs.get('token')
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'token= {self.token:s}')
+        logging.debug (f'token= {self.token:s}')
 
         """
         if (len(self.outpath) > 0):
@@ -1239,12 +1097,10 @@ class Archive:
 
         len_param = len(param)
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'len_param= {len_param:d}')
+        logging.debug (f'len_param= {len_param:d}')
 
-            for k,v in param.items():
-                logging.debug (f'k, v= {k:s}, {str(v):s}')
+        for k,v in param.items():
+            logging.debug (f'k, v= {k:s}, {str(v):s}')
 
         """send url to server to construct the select statement
         """
@@ -1269,10 +1125,8 @@ class Archive:
                 ' to integer.')
             return
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'format= {self.format:s}')
-            logging.debug (f'maxrec= {self.maxrec:d}')
+        logging.debug (f'format= {self.format:s}')
+        logging.debug (f'maxrec= {self.maxrec:d}')
 
         data = urllib.parse.urlencode (param)
 
@@ -1286,9 +1140,7 @@ class Archive:
         if ('server' in kwargs):
             self.baseurl = kwargs.get ('server')
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'baseurl= {self.baseurl:s}')
+        logging.debug (f'baseurl= {self.baseurl:s}')
 
         """urls for nph-tap.py, nph-neidLogin, nph-neidMakeQyery, 
         nph-neidDownload
@@ -1297,37 +1149,25 @@ class Archive:
         self.tap_url = self.baseurl + 'TAP'
         self.makequery_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidMakequery.py?'
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'tap_url= [{self.tap_url:s}]')
-            logging.debug (f'makequery_url= [{self.makequery_url:s}]')
+        logging.debug (f'tap_url= [{self.tap_url:s}]')
+        logging.debug (f'makequery_url= [{self.makequery_url:s}]')
 
         url = self.makequery_url + data            
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'url= {url:s}')
+        logging.debug (f'url= {url:s}')
 
         query = ''
         try:
             query = self.__make_query (url) 
 
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('returned __make_query')
-  
+            logging.debug ('returned __make_query')
         except Exception as e:
-
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'Error: {str(e):s}')
+            logging.debug (f'Error: {str(e):s}')
             
             print (str(e))
             return 
         
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'query= {query:s}')
+        logging.debug (f'query= {query:s}')
        
         self.query = query
 
@@ -1338,147 +1178,66 @@ class Archive:
         self.tap = None
         if (len(self.cookiepath) > 0):
             
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('xxx0')
-                logging.debug (f'cookiepath= {self.cookiepath:s}')
-       
-            if self.debug:
-                
-                try:
-                    self.tap = NeidTap (self.tap_url, \
-                        format=self.format, \
-                        maxrec=self.maxrec, \
-                        cookiefile=self.cookiepath, \
-	                debug=1)
-                
-                except Exception as e:
+            logging.debug ('')
+            logging.debug ('xxx0')
+            logging.debug (f'cookiepath= {self.cookiepath:s}')
+                       
+            try:
+                self.tap = NeidTap (self.tap_url, \
+                    format=self.format, \
+                    maxrec=self.maxrec, \
+                    cookiefile=self.cookiepath, \
+                    debug=self.debug)
             
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'Error: {str(e):s}')
-                    
-                    print (str(e))
-                    return 
-
-            else:
-                try:
-                    self.tap = NeidTap (self.tap_url, \
-                        format=self.format, \
-                        maxrec=self.maxrec, \
-                        cookiefile=self.cookiepath)
+            except Exception as e:
+                logging.debug (f'Error: {str(e):s}')
                 
-                except Exception as e:
-            
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'Error: {str(e):s}')
-                    
-                    print (str(e))
-                    return 
+                print (str(e))
+                return 
         
         elif (len(self.token) > 0):
             
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('xxx1')
-                logging.debug (f'token= {self.token:s}')
-       
-            if self.debug:
-                
-                try:
-                    self.tap = NeidTap (self.tap_url, \
-                        format=self.format, \
-                        maxrec=self.maxrec, \
-                        token=self.token, \
-	                debug=1)
-                
-                except Exception as e:
-            
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'Error: {str(e):s}')
-                    
-                    print (str(e))
-                    return 
-
-            else:
-                try:
-                    self.tap = NeidTap (self.tap_url, \
-                        format=self.format, \
-                        maxrec=self.maxrec, \
-                        token=self.token)
-                
-                except Exception as e:
-            
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'Error: {str(e):s}')
-                    
-                    print (str(e))
-                    return 
+            logging.debug ('xxx1')
+            logging.debug (f'token= {self.token:s}')
+                       
+            try:
+                self.tap = NeidTap (self.tap_url, \
+                    format=self.format, \
+                    maxrec=self.maxrec, \
+                    token=self.token, \
+                    debug=self.debug)
+            except Exception as e:
+                logging.debug (f'Error: {str(e):s}')
+                print (str(e))
+                return 
         
         else: 
-            if self.debug:
-                try:
-                    self.tap = NeidTap (self.tap_url, \
-                        format=self.format, \
-                        maxrec=self.maxrec, \
-	                debug=1)
+            try:
+                self.tap = NeidTap(self.tap_url, \
+                    format=self.format, \
+                    maxrec=self.maxrec, \
+                    debug=self.debug)
+            
+            except Exception as e:
+                logging.debug (f'Error: {str(e):s}')
                 
-                except Exception as e:
-            
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'Error: {str(e):s}')
-                    
-                    print (str(e))
-                    return 
-        
-            else:
-                try:
-                    self.tap = NeidTap (self.tap_url, \
-                        format=self.format, \
-                        maxrec=self.maxrec)
-        
-                except Exception as e:
-            
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'Error: {str(e):s}')
-                    
-                    print (str(e))
-                    return 
-        
-        if self.debug:
-            logging.debug('')
-            logging.debug('NeidTap initialized')
-            logging.debug('')
-            logging.debug(f'query= {query:s}')
+                print (str(e))
+                return 
+                
+        logging.debug('NeidTap initialized')
+        logging.debug(f'query= {query:s}')
 
         print ('submitting request...')
 
-        if self.debug:
-            logging.debug('')
-            logging.debug('call self.tap.send_async with debug')
+        logging.debug('call self.tap.send_async with debug')
             
-            retstr = self.tap.send_async (query, \
-                outpath=self.outpath, \
-                format=self.format, \
-                maxrec=self.maxrec, debug=1)
-        else:
-            logging.debug('')
-            logging.debug('call self.tap.send_async NO debug')
-            
-            retstr = self.tap.send_async (query, \
-                outpath=self.outpath, \
-                format=self.format, \
-                maxrec=self.maxrec)
+        retstr = self.tap.send_async (query, \
+            outpath=self.outpath, \
+            format=self.format, \
+            maxrec=self.maxrec, debug=self.debug)
         
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'return self.tap.send_async:')
-            logging.debug (f'retstr= {retstr:s}')
+        logging.debug (f'return self.tap.send_async:')
+        logging.debug (f'retstr= {retstr:s}')
 
         retstr_lower = retstr.lower()
 
@@ -1497,8 +1256,6 @@ class Archive:
     """} end Archive.query_criteria
     """
         
-    
-    
     """{ Archive.query_adql
     """
     def query_adql (self, query, **kwargs):
@@ -1533,47 +1290,37 @@ class Archive:
 	     default: -1 or not specified will return all requested records
         """
    
-        if (self.debug == 0):
-
-            if ('debugfile' in kwargs):
-            
-                self.debug = 1
-                self.debugfname = kwargs.get ('debugfile')
-
-                if (len(self.debugfname) > 0):
-      
-                    logging.basicConfig (filename=self.debugfname, \
-                        level=logging.DEBUG)
-    
-                    with open (self.debugfname, 'w') as fdebug:
-                        pass
-
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('debug turned on')
+        if ('debugfile' in kwargs):
         
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('')
-            logging.debug ('Enter query_adql:')
+            self.debug = 1
+            self.debugfname = kwargs.get ('debugfile')
+            logging.debug ('debug turned on')
+
+            if (len(self.debugfname) > 0):
+    
+                logging.basicConfig(filename=self.debugfname, \
+                    level=logging.DEBUG)
+
+                with open (self.debugfname, 'w') as fdebug:
+                    pass
+        else:
+            logging.basicConfig(filename=self.debugfname, \
+                    level=logging.INFO)
+        
+        logging.debug ('Enter query_adql:')
         
         if (len(query) == 0):
             print ('Failed to find required parameter: query')
             return
         
         self.query = query
- 
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('')
-            logging.debug (f'query= {self.query:s}')
+            
+        logging.debug (f'query= {self.query:s}')
        
         if ('cookiepath' in kwargs): 
             self.cookiepath = kwargs.get('cookiepath')
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'cookiepath= {self.cookiepath:s}')
+        logging.debug (f'cookiepath= {self.cookiepath:s}')
 
         self.outpath = ''
         if ('outpath' in kwargs): 
@@ -1587,11 +1334,9 @@ class Archive:
         if ('maxrec' in kwargs): 
             self.maxrec = kwargs.get('maxrec')
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'outpath= {self.outpath:s}')
-            logging.debug (f'format= {self.format:s}')
-            logging.debug (f'maxrec= {self.maxrec:d}')
+        logging.debug (f'outpath= {self.outpath:s}')
+        logging.debug (f'format= {self.format:s}')
+        logging.debug (f'maxrec= {self.maxrec:d}')
 
         """retrieve baseurl from conf class;
         """
@@ -1601,18 +1346,14 @@ class Archive:
         if ('server' in kwargs):
             self.baseurl = kwargs.get ('server')
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'baseurl= {self.baseurl:s}')
+        logging.debug (f'baseurl= {self.baseurl:s}')
 
         """urls for nph-tap.py
         """
 
         self.tap_url = self.baseurl + 'TAP'
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'tap_url= [{self.tap_url:s}]')
+        logging.debug (f'tap_url= [{self.tap_url:s}]')
 
         """send tap query
         """
@@ -1620,64 +1361,36 @@ class Archive:
         self.tap = None
 
         if (len(self.cookiepath) > 0):
-           
-            if self.debug:
-                self.tap = NeidTap (self.tap_url, \
-                    format=self.format, \
-                    maxrec=self.maxrec, \
-                    cookiefile=self.cookiepath, \
-	            debug=1)
-            else:
-                self.tap = NeidTap (self.tap_url, \
-                    format=self.format, \
-                    maxrec=self.maxrec, \
-                    cookiefile=self.cookiepath)
+            self.tap = NeidTap (self.tap_url, \
+                               format=self.format, \
+                               maxrec=self.maxrec, \
+                               cookiefile=self.cookiepath, \
+	                           debug=self.debug)
         else: 
-            if self.debug:
-                self.tap = NeidTap (self.tap_url, \
-                    format=self.format, \
-                    maxrec=self.maxrec, \
-	            debug=1)
-            else:
-                self.tap = NeidTap (self.tap_url, \
-                    format=self.format, \
-                    maxrec=self.maxrec)
+            self.tap = NeidTap (self.tap_url, \
+                format=self.format, \
+                maxrec=self.maxrec, \
+                debug=self.debug)
         
-        if self.debug:
-            logging.debug('')
-            logging.debug('NeidTap initialized')
-            logging.debug(f'query= {query:s}')
-            logging.debug('call self.tap.send_async')
+        logging.debug('NeidTap initialized')
+        logging.debug(f'query= {query:s}')
+        logging.debug('call self.tap.send_async')
 
         print ('submitting request...')
-
-        if self.debug:
-            if (len(self.outpath) > 0):
-                retstr = self.tap.send_async (query, \
-                    outpath=self.outpath, \
-                    format=self.format, \
-                    maxrec=self.maxrec, \
-                    debug=1)
-            else:
-                retstr = self.tap.send_async (query, \
-                    format=self.format, \
-                    maxrec=self.maxrec, \
-                    debug=1)
+        if (len(self.outpath) > 0):
+            retstr = self.tap.send_async(query,
+                                         outpath=self.outpath,
+                                         format=self.format,
+                                         maxrec=self.maxrec,
+                                         debug=self.debug)
         else:
-            if (len(self.outpath) > 0):
-                retstr = self.tap.send_async (query, \
-                    outpath=self.outpath, \
-                    format=self.format, \
-                    maxrec=self.maxrec)
-            else:
-                retstr = self.tap.send_async (query, \
-                    format=self.format, \
-                    maxrec=self.maxrec)
-        
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'return self.tap.send_async:')
-            logging.debug (f'retstr= {retstr:s}')
+            retstr = self.tap.send_async (query,
+                                          format=self.format,
+                                          maxrec=self.maxrec,
+                                          debug=self.debug)
+
+        logging.debug (f'return self.tap.send_async:')
+        logging.debug (f'retstr= {retstr:s}')
 
         retstr_lower = retstr.lower()
 
@@ -1701,11 +1414,7 @@ class Archive:
     """{ Archive.print_date
     """
     def print_data (self):
-
-
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('Enter neid.print_data:')
+        logging.debug ('Enter neid.print_data:')
 
         try:
             self.tap.print_data ()
@@ -1718,7 +1427,6 @@ class Archive:
     
     """} end Archive.print_date
     """
-
 
     
     """{ Archive.download
@@ -1759,9 +1467,7 @@ class Archive:
         """
         
         if (self.debug == 0):
-
             if ('debugfile' in kwargs):
-            
                 self.debug = 1
                 self.debugfname = kwargs.get ('debugfile')
 
@@ -1769,17 +1475,17 @@ class Archive:
       
                     logging.basicConfig (filename=self.debugfname, \
                         level=logging.DEBUG)
-    
-                    with open (self.debugfname, 'w') as fdebug:
-                        pass
 
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('debug turned on')
+                    logging.debug ('')
+                    logging.debug ('debug turned on')
+
+                    with open (self.debugfname, 'w') as fdebug:
+                        pass 
+            else:
+                logging.basicConfig (filename=self.debugfname, \
+                        level=logging.DEBUG)
     
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('Enter download:')
+        logging.debug ('Enter download:')
         
         if (len(metapath) == 0):
             print ('Failed to find required input parameter: metapath')
@@ -1797,27 +1503,21 @@ class Archive:
         self.format = format
         self.outdir = outdir
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'metapath= {self.metapath:s}')
-            logging.debug (f'format= {self.format:s}')
-            logging.debug (f'outdir= {self.outdir:s}')
+        logging.debug (f'metapath= {self.metapath:s}')
+        logging.debug (f'format= {self.format:s}')
+        logging.debug (f'outdir= {self.outdir:s}')
 
         self.token = ''
         if ('token' in kwargs): 
             self.token = kwargs.get('token')
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'token= {self.token:s}')
+        logging.debug (f'token= {self.token:s}')
 
         self.cookiepath = ''
         if ('cookiepath' in kwargs): 
             self.cookiepath = kwargs.get('cookiepath')
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'cookiepath= {self.cookiepath:s}')
+        logging.debug (f'cookiepath= {self.cookiepath:s}')
 
         """token take precedence: only load cookie if token doesn't exist
         """
@@ -1836,24 +1536,20 @@ class Archive:
                 try: 
                     cookiejar.load (ignore_discard=True, ignore_expires=True)
     
-                    if self.debug:
-                        logging.debug (\
-                            f'cookie loaded from file: {self.cookiepath:s}')
+                    logging.debug (\
+                        f'cookie loaded from file: {self.cookiepath:s}')
         
                     for cookie in cookiejar:
                     
-                        if self.debug:
-                            logging.debug ('')
-                            logging.debug ('cookie=')
-                            logging.debug (cookie)
-                            logging.debug (f'cookie.name= {cookie.name:s}')
-                            logging.debug (f'cookie.value= {cookie.value:s}')
-                            logging.debug (f'cookie.domain= {cookie.domain:s}')
+                        logging.debug ('cookie=')
+                        logging.debug (cookie)
+                        logging.debug (f'cookie.name= {cookie.name:s}')
+                        logging.debug (f'cookie.value= {cookie.value:s}')
+                        logging.debug (f'cookie.domain= {cookie.domain:s}')
 
                 except Exception as e:
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'loadCookie exception: {str(e):s}')
+                    logging.debug (f'loadCookie exception: {str(e):s}')
+                    
                     pass
 
         """} end load cookie to cookiejar 
@@ -1882,10 +1578,8 @@ class Archive:
 
         self.len_tbl = len(self.astropytbl)
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('self.astropytbl read')
-            logging.debug (f'self.len_tbl= {self.len_tbl:d}')
+        logging.debug ('self.astropytbl read')
+        logging.debug (f'self.len_tbl= {self.len_tbl:d}')
 
         if (self.len_tbl == 0):
             print ('There is no data in the metadata table.')
@@ -1894,25 +1588,18 @@ class Archive:
         
         self.colnames = self.astropytbl.colnames
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('self.colnames:')
-            logging.debug (self.colnames)
+        logging.debug ('self.colnames:')
+        logging.debug (self.colnames)
   
         self.len_col = len(self.colnames)
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'self.len_col= {self.len_col:d}')
+        logging.debug (f'self.len_col= {self.len_col:d}')
 
         filenamecol = datalevel + 'filename'
         filepathcol = datalevel + 'filepath'
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'filenamecol= {filenamecol:s}')
-            logging.debug (f'filepathcol= {filepathcol:s}')
-
+        logging.debug (f'filenamecol= {filenamecol:s}')
+        logging.debug (f'filepathcol= {filepathcol:s}')
 
         ind_filenamecol = -1
         ind_filepathcol = -1
@@ -1924,10 +1611,8 @@ class Archive:
             if (self.colnames[i].lower() == filepathcol):
                 ind_filepathcol = i
              
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'ind_filenamecol= {ind_filenamecol:d}')
-            logging.debug (f'ind_filepathcol= {ind_filepathcol:d}')
+        logging.debug (f'ind_filenamecol= {ind_filenamecol:d}')
+        logging.debug (f'ind_filepathcol= {ind_filepathcol:d}')
       
         if (ind_filenamecol == -1):
 
@@ -1945,41 +1630,26 @@ class Archive:
     
         calibfile = 0 
         
-        """
-        if ('calibfile' in kwargs): 
-            calibfile = kwargs.get('calibfile')
-         
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'calibfile= {calibfile:d}')
-        """
-
         srow = 0;
         erow = self.len_tbl - 1
 
         if ('start_row' in kwargs): 
             srow = kwargs.get('start_row')
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'srow= {srow:d}')
+        logging.debug (f'srow= {srow:d}')
      
         if ('end_row' in kwargs): 
             erow = kwargs.get('end_row')
         
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'erow= {erow:d}')
+        logging.debug (f'erow= {erow:d}')
      
         if (srow < 0):
             srow = 0 
         if (erow > self.len_tbl - 1):
             erow = self.len_tbl - 1 
  
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'srow= {srow:d}')
-            logging.debug (f'erow= {erow:d}')
+        logging.debug (f'srow= {srow:d}')
+        logging.debug (f'erow= {erow:d}')
      
 
         """create outdir if it doesn't exist
@@ -1993,23 +1663,16 @@ class Archive:
 
         d1 = int ('0775', 8)
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'd1= {d1:d}')
+        logging.debug (f'd1= {d1:d}')
      
         try:
             os.makedirs (self.outdir, mode=d1, exist_ok=True) 
-
         except Exception as e:
-            
             self.msg = 'Failed to create {self.outdir:s}:' + str(e) 
             print (self.msg)
             sys.exit()
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('returned os.makedirs') 
-
+        logging.debug ('returned os.makedirs') 
 
         """retrieve baseurl from conf class;
         """
@@ -2019,19 +1682,14 @@ class Archive:
         if ('server' in kwargs):
             self.baseurl = kwargs.get ('server')
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'baseurl= {self.baseurl:s}')
+        logging.debug (f'baseurl= {self.baseurl:s}')
 
         """urls for nph-neidDownload.py
         """
 
         self.getneid_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidDownload.py?'
-
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'self.getneid_url= {self.getneid_url:s}')
-
+        
+        logging.debug (f'self.getneid_url= {self.getneid_url:s}')
 
         filename = ''
         filepath = ''
@@ -2049,35 +1707,26 @@ class Archive:
 
         for l in range (srow, erow+1):
        
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'l= {l:d}')
-                logging.debug ('')
-                logging.debug ('self.astropytbl[l]= ')
-                logging.debug (self.astropytbl[l])
+            logging.debug (f'l= {l:d}')
+            logging.debug ('\nself.astropytbl[l]= ')
+            logging.debug (self.astropytbl[l])
 
             filename = self.astropytbl[l][ind_filenamecol]
             filepath = self.astropytbl[l][ind_filepathcol]
 	    
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('type(datalevel)= ')
-                logging.debug (type(datalevel))
-                logging.debug (type(datalevel) is bytes)
+            logging.debug ('type(datalevel)= ')
+            logging.debug (type(datalevel))
+            logging.debug (type(datalevel) is bytes)
             
             if (type (filename) is bytes):
                 
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug ('bytes: decode')
+                logging.debug ('bytes: decode')
 
                 filename = filename.decode("utf-8")
                 filepath = filepath.decode("utf-8")
            
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'l= {l:d} filename= {filename:s}')
-                logging.debug (f'filepath= {filepath:s}')
+            logging.debug (f'l= {l:d} filename= {filename:s}')
+            logging.debug (f'filepath= {filepath:s}')
 
             """get data files
             """
@@ -2087,19 +1736,15 @@ class Archive:
             
             filepath = self.outdir + '/' + filename 
                 
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'filepath= {filepath:s}')
-                logging.debug (f'url= {url:s}')
+            logging.debug (f'filepath= {filepath:s}')
+            logging.debug (f'url= {url:s}')
 
             """if file doesn't exist: download
             """
 
             isExist = os.path.exists (filepath)
 	    
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'isExist= {isExist:d}')
+            logging.debug (f'isExist= {isExist:d}')
 
             if (not isExist):
 
@@ -2109,169 +1754,50 @@ class Archive:
 
                     self.msg =  'Returned file written to: ' + filepath   
            
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug ('returned __submit_request')
-                        logging.debug (f'self.msg= {self.msg:s}')
+                    logging.debug ('returned __submit_request')
+                    logging.debug (f'self.msg= {self.msg:s}')
             
                 except Exception as e:
                     print (f'File [{filename:s}] download: {str(e):s}')
 
 
-            """{ comment:  if calibfile == 1: download calibfile code block 
-            for possible caliblist and files download in the future;
-            it is not implemented at this time.
-
-            if (calibfile == 1):
-
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug ('calibfile=1: downloading calibfiles')
-	    
-                filename_base = '' 
-                ind = -1
-                ind = filenameid.rfind ('.')
-                if (ind > 0):
-                    filename_base = filename[0:ind]
-                else:
-                    filename_base = filename
-
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug (f'filename_base= {filename_base:s}')
-	    
-                caliblist = self.outdir + '/' + filename_base + '.caliblist.json'
-                
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug (f'caliblist= {caliblist:s}')
-
-                isExist = os.path.exists (caliblist)
-	    
-                if (not isExist):
-
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug ('downloading calibfiles')
-	    
-                    url = self.caliblist_url \
-                        + 'datalevel=' + datalevel \
-                        + '&filename=' + filename
-
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'caliblist url= {url:s}')
-
-                try:
-                    self.__submit_request (url, caliblist, cookiejar)
-                    self.ncaliblist = self.ncaliblist + 1
-
-                    self.msg =  'Returned file written to: ' + caliblist   
-           
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug ('returned __submit_request')
-                        logging.debug (f'self.msg= {self.msg:s}')
-            
-                except Exception as e:
-                    print (f'File [{caliblist:s}] download: {str(e):s}')
-                
-
-            comment: check again after caliblist is successfully downloaded, 
-            if caliblist exists: download calibfiles
-                
-                isExist = os.path.exists (caliblist)
-                                  
-                if (isExist):
-
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug ('list exist: downloading calibfiles')
-	    
-                    try:
-                        ncalibs = self.__download_calibfiles ( \
-                            caliblist, cookiejar)
-                        self.ndnloaded_calib = self.ndnloaded_calib + ncalibs
-                
-                        if self.debug:
-                            logging.debug ('')
-                            logging.debug ('returned __download_calibfiles')
-                            logging.debug (f'{ncalibs:d} downloaded')
-
-                    except Exception as e:
-                
-                        self.msg = 'Error downloading files in caliblist [' + \
-                            filepath + ']: ' +  str(e)
-                        
-                        if self.debug:
-                            logging.debug ('')
-                            logging.debug (f'errmsg= {self.msg:s}')
-            
-            } comment: endif (download_calibfiles):
-            """
-
         """}  endfor l in range (srow, erow+1)
         """
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'{self.len_tbl:d} files in the table;')
-            logging.debug (f'{self.ndnloaded:d} files downloaded.')
-            logging.debug (f'{self.ncaliblist:d} calibration list downloaded.')
-
-            """logging.debug (
-            f'{self.ndnloaded_calib:d} calibration files downloaded.')
-            """
+        logging.debug (f'{self.len_tbl:d} files in the table;')
+        logging.debug (f'{self.ndnloaded:d} files downloaded.')
+        logging.debug (f'{self.ncaliblist:d} calibration list downloaded.')
 
         print (f'A total of new {self.ndnloaded:d} FITS files downloaded.')
- 
-        """if (calibfile == 1):
-        print (f'{self.ncaliblist:d} new calibration list downloaded.')
-        print (
-        f'{self.ndnloaded_calib:d} new calibration FITS files downloaded.')
-        """
 
         return
     
     """} end Archive.download
     """
     
-
-    
     """{ Archive.__submit_request
     """
     def __submit_request(self, url, filepath, cookiejar):
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('Enter database.__submit_request:')
-            logging.debug (f'url= {url:s}')
-            logging.debug (f'filepath= {filepath:s}')
+        logging.debug ('Enter database.__submit_request:')
+        logging.debug (f'url= {url:s}')
+        logging.debug (f'filepath= {filepath:s}')
        
-            if not (cookiejar is None):  
-            
-                for cookie in cookiejar:
-                    
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug ('cookie saved:')
-                        logging.debug (f'cookie.name= {cookie.name:s}')
-                        logging.debug (f'cookie.value= {cookie.value:s}')
-                        logging.debug (f'cookie.domain= {cookie.domain:s}')
+        if not (cookiejar is None):  
+            for cookie in cookiejar:
+                logging.debug ('cookie saved:')
+                logging.debug (f'cookie.name= {cookie.name:s}')
+                logging.debug (f'cookie.value= {cookie.value:s}')
+                logging.debug (f'cookie.domain= {cookie.domain:s}')
             
         try:
             self.response =  requests.get (url, cookies=cookiejar, \
                 stream=True)
 
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('request sent')
+            logging.debug ('request sent')
         
         except Exception as e:
-            
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'exception: {str(e):s}')
+            logging.debug (f'exception: {str(e):s}')
 
             self.status = 'error'
             self.msg = 'Failed to submit the request: ' + str(e)
@@ -2279,11 +1805,8 @@ class Archive:
             raise Exception (self.msg)
             return
                        
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('status_code:')
-            logging.debug (self.response.status_code)
-      
+        logging.debug ('status_code:')
+        logging.debug (self.response.status_code)
       
         if (self.response.status_code == 200):
             self.status = 'ok'
@@ -2295,93 +1818,57 @@ class Archive:
             raise Exception (self.msg)
             return
                        
-            
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('headers: ')
-            logging.debug (self.response.headers)
-      
+        logging.debug ('headers: ')
+        logging.debug (self.response.headers)
       
         self.content_type = ''
         try:
             self.content_type = self.response.headers['Content-type']
         except Exception as e:
+            logging.debug (f'exception extract content-type: {str(e):s}')
 
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'exception extract content-type: {str(e):s}')
-
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'content_type= {self.content_type:s}')
-
+        logging.debug (f'content_type= {self.content_type:s}')
 
         if (self.content_type == 'application/json'):
             
-            if self.debug:
-                logging.debug ('')
-                logging.debug (\
-                    'return is a json structure: might be error message')
+            logging.debug ('return is a json structure: might be error message')
             
             jsondata = json.loads (self.response.text)
           
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('jsondata:')
-                logging.debug (jsondata)
+            logging.debug ('jsondata:')
+            logging.debug (jsondata)
 
  
             self.status = ''
             try: 
                 self.status = jsondata['status']
                 
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug (f'self.status= {self.status:s}')
+                logging.debug (f'self.status= {self.status:s}')
 
             except Exception as e:
-
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug (f'get status exception: e= {str(e):s}')
+                logging.debug (f'get status exception: e= {str(e):s}')
 
             self.msg = '' 
             try: 
                 self.msg = jsondata['msg']
-                
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug (f'self.msg= {self.msg:s}')
+                logging.debug (f'self.msg= {self.msg:s}')
 
             except Exception as e:
-
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug (f'extract msg exception: e= {str(e):s}')
+                logging.debug (f'extract msg exception: e= {str(e):s}')
 
             errmsg = ''        
             try: 
                 errmsg = jsondata['error']
-                
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug (f'errmsg= {errmsg:s}')
+                logging.debug (f'errmsg= {errmsg:s}')
 
                 if (len(errmsg) > 0):
                     self.status = 'error'
                     self.msg = errmsg
-
             except Exception as e:
+                logging.debug (f'get error exception: e= {str(e):s}')
 
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug (f'get error exception: e= {str(e):s}')
-
-
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'self.status= {self.status:s}')
-                logging.debug (f'self.msg= {self.msg:s}')
+            logging.debug (f'self.status= {self.status:s}')
+            logging.debug (f'self.msg= {self.msg:s}')
 
 
             if (self.status == 'error'):
@@ -2391,9 +1878,7 @@ class Archive:
         """save to filepath
         """
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('save_to_file:')
+        logging.debug ('save_to_file:')
        
         try:
             with open (filepath, 'wb') as fd:
@@ -2403,15 +1888,10 @@ class Archive:
             
             self.msg =  'Returned file written to: ' + filepath   
             
-            if self.debug:
-                logging.debug ('')
-                logging.debug (self.msg)
+            logging.debug (self.msg)
 	
         except Exception as e:
-
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'exception: {str(e):s}')
+            logging.debug (f'exception: {str(e):s}')
 
             self.status = 'error'
             self.msg = 'Failed to save returned data to file: %s' % filepath
@@ -2421,51 +1901,31 @@ class Archive:
 
         return
     
-    """} end Archive.__submit_request
-    """
-                       
-
-    
     """{ Archive.__make_query
     """
     def __make_query (self, url):
-       
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('Enter __make_query:')
-            logging.debug (f'url= {url:s}')
+        logging.debug ('Enter __make_query:')
+        logging.debug (f'url= {url:s}')
 
         response = None
         try:
             response = requests.get (url, stream=True)
-
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('request sent')
+            logging.debug ('request sent')
 
         except Exception as e:
-           
             self.msg = 'Error: ' + str(e)
-
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'exception: e= {str(e):s}')
+            logging.debug (f'exception: e= {str(e):s}')
             
             raise Exception (self.msg)
 
 
         content_type = response.headers['content-type']
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'content_type= {content_type:s}')
+        logging.debug (f'content_type= {content_type:s}')
       
         query = ''
         if (content_type == 'application/json'):
-                
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'response.text: {response.text:s}')
+            logging.debug (f'response.text: {response.text:s}')
 
             """error message
             """
@@ -2473,38 +1933,28 @@ class Archive:
             try:
                 jsondata = json.loads (response.text)
                  
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug ('jsondata loaded')
+                logging.debug ('jsondata loaded')
                 
                 self.status = jsondata['status']
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug (f'status: {self.status:s}')
+                logging.debug (f'status: {self.status:s}')
 
 
                 if (self.status == 'ok'):
                     query = jsondata['query']
                     
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'query: {self.query:s}')
+                    logging.debug (f'query: {self.query:s}')
 
                 else:
                     self.msg = jsondata['msg']
                     
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'msg: {self.msg:s}')
+                    logging.debug (f'msg: {self.msg:s}')
 
                     raise Exception (self.msg)
 
             except Exception:
                 self.msg = 'returned JSON object parse error'
                 
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug ('JSON object parse error')
+                logging.debug ('JSON object parse error')
       
                 
                 raise Exception (self.msg)
