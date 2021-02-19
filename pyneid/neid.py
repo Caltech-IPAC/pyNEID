@@ -267,6 +267,7 @@ class Archive(object):
         
         logging.debug('\ncall query_criteria')
 
+        import pdb; pdb.set_trace()
         self.query_criteria(param, **kwargs)
 
         return
@@ -809,11 +810,11 @@ class Archive(object):
         logging.debug (f'\ntap_url= [{self.tap_url:s}]')
         logging.debug (f'makequery_url= [{self.makequery_url:s}]')
 
-        url = self.makequery_url + data
+        self.tap_url = self.makequery_url + data
 
-        logging.debug (f'\nurl= {url:s}')
+        logging.debug (f'\nurl= {self.tap_url:s}')
 
-        query = self.__make_query(url)
+        query = self.__make_query(self.tap_url)
         logging.debug('\nreturned __make_query')
 
         self.query = query
