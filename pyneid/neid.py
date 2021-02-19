@@ -16,8 +16,7 @@ import http.cookiejar
 
 from astropy.table import Table, Column
 
-from . import conf
-
+from pyneid import conf
 
 class Archive(object):
     """
@@ -47,7 +46,8 @@ class Archive(object):
     # status = ''
     # msg = ''
 
-    def __init__(self, debug=False, debugfile='./archive.debug', baseurl=conf.server, **kwargs):
+    def __init__(self, debug=False, debugfile='./archive.debug', cookiepath='', token='', 
+                 baseurl=conf.server, outpath='./neid_query.ipc', format='csv', maxrec=-1, **kwargs):
         """
         initialize the Archive class
 
@@ -55,6 +55,15 @@ class Archive(object):
             debug (bool): (optional) Add additional debugging messages into the log? [False]
             debugfile (string): (optional) a file path for the debug output ['./archive.debug']
             baseurl (string): (optional) specify a non-standard URL to TAP service. [neid.ipac.caltech.edu
+            cookiepath (string): (optional) a full cookie file path saved from login for 
+                querying the proprietary NEID data.
+            token (string): (optional) a token string from login for querying 
+                the proprietary NEID data; the token is only valid for the 
+                current session.
+            outpath (string): (optional) a full output filepath of the returned metadata table
+            format (string):  (optional) Output format. votable, ipac, csv, tsv [csv]
+	        maxrec (integer):  (optional) maximum records to be returned. -1 or not specified 
+                will return all requested record [-1]
 
         Examples:
             >>> import os
@@ -68,10 +77,26 @@ class Archive(object):
         self.debugfname = debugfile
         self.baseurl = baseurl
 
-        self.tap_url = self.baseurl + '/TAP'
-        self.login_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidLogin.py?'
-        self.makequery_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidMakequery.py?'
-        self.getneid_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidDownload.py?'
+        self.tap_url = self.baseurl + 'TAP'
+        self.login_url = self.baseurl + 'NeidAPI/nph-neidLogin.py?'
+        self.makequery_url = self.baseurl + 'NeidAPI/nph-neidMakequery.py?'
+        self.getneid_url = self.baseurl + 'NeidAPI/nph-neidDownload.py?'
+
+        self.outpath = outpath
+
+        self.cookiepath = cookiepath
+        self.token = token
+
+        self.format = format
+        try:
+            self.maxrec = float(maxrec)
+            self.maxrec = int(maxrec)
+        except Exception as e:
+            print (f'Failed to convert maxrec: ' + str(self.maxrec) + \
+                ' to integer.')
+            return
+
+        self.maxrec = maxrec
 
         if self.debug:
             logging.basicConfig(filename=self.debugfname, level=logging.DEBUG)
@@ -79,7 +104,6 @@ class Archive(object):
             logging.basicConfig(filename=self.debugfname, level=logging.INFO)
  
         logging.debug('\nEnter Archive.init:')
-
         logging.debug(f'\nbaseurl= {self.baseurl:s}')
 
         # urls for nph-tap.py, nph-neidLogin, nph-makeQyery, nph-neidDownload
@@ -87,7 +111,7 @@ class Archive(object):
         logging.debug(f'tap_url= [{self.tap_url:s}]')
         logging.debug(f'makequery_url= [{self.makequery_url:s}]')
         logging.debug(f'self.getneid_url= {self.getneid_url:s}')
-      
+        
     def login(self, userid='', password='', cookiepath='./pyneid.cookie', **kwargs):
         """
         Validates a user has a valid NEID account; it takes two
@@ -144,11 +168,10 @@ class Archive(object):
         # it should be an 'application/json' structure, 
         # parse for return status and message
         contenttype = response.headers['Content-type']
-        
         jsondata = json.loads(response.text)
         self.status = jsondata['status']
         self.msg = jsondata['msg']
-        self.token = jsondata['token']
+        self.token = jsondata.setdefault('token', '')
 
         logging.debug('\ndebug turned on')
         logging.debug('\nEnter login:')
@@ -189,7 +212,7 @@ class Archive(object):
 
         logging.error(self.msg)
 
-    def query_datetime (self, datalevel, datetime, outpath='', **kwargs):
+    def query_datetime (self, datalevel, datetime, **kwargs):
         """
         Search NEID data by 'datetime' range
         
@@ -209,130 +232,61 @@ class Archive(object):
 
                 datetime1: will search data with datetime equal to (=) datetime1;
                     this is not recommended.
-            outpath (string): (optional) a full output filepath of the returned metadata table
-
+        
         Examples:
             datalevel = 'l0',
-            datetime = '2020-11-16 06:10:55/2020-11-18 00:00:00' 
+            datetime = '2021-01-16 06:10:55/2021-02-18 00:00:00' 
 
             datalevel = 'l1',
-            datetime = '2020-11-16 06:10:55/' 
+            datetime = '2021-01-16 06:10:55/' 
 
             datalevel = 'l2',
-            datetime = '/2020-112-18 00:00:00' 
-
-        Optional Keyword Inputs:
-	----------------
-        outpath (string): a full output filepath of the returned metadata 
-            table
+            datetime = '/2021-02-18 00:00:00' 
       
-        For searching proprietary NEID data, either the cookiepath or 
-        the token string saved from "login" is needed:  
-
-        cookiepath (string): a full cookie file path saved from login for 
-            querying the proprietary NEID data.
-        
-        token (string): a token string save in memory from login for querying 
-            the proprietary NEID data; the token is only valid for the 
-            current session.
-      
-	format (string):  Output format: votable, ipac, csv, tsv 
-	                  (default: votable)
-        
-	maxrec (integer):  maximum records to be returned 
-	         default: -1 or not specified will return all requested records
         """
- 
-        if (self.debug == 0):
-
-            if ('debugfile' in kwargs):
-            
-                self.debug = 1
-                self.debugfname = kwargs.get ('debugfile')
-
-                if (len(self.debugfname) > 0):
-      
-                    logging.basicConfig (filename=self.debugfname, \
-                        level=logging.DEBUG)
-    
-                    with open (self.debugfname, 'w') as fdebug:
-                        pass
-
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('debug turned on')
-        
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('')
-            logging.debug ('Enter query_datetime:')
+        logging.debug('\ndebug turned on')
+        logging.debug('\n\nEnter query_datetime:')
        
-        datalevel = str(datalevel)
-
-        if (len(datalevel) == 0):
+        self.datalevel = str(datalevel)
+        if len(datalevel) == 0:
             print ('Failed to find required parameter: datalevel')
             return
 
-        datetime = str(datetime)
-
-        if (len(datetime) == 0):
+        self.datetime = str(datetime)
+        if len(datetime) == 0:
             print ('Failed to find required parameter: datetime')
             return
 
-        self.datalevel = datalevel
-        self.datetime = datetime
+        logging.debug(f'\ndatalevel= {self.datalevel:s}')
+        logging.debug(f'datetime= {self.datetime:s}')
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'datalevel= {self.datalevel:s}')
-            logging.debug (f'datetime= {self.datetime:s}')
-
-#
-#    send url to server to construct the select statement
-#
+        # send url to server to construct the select statement
         param = dict()
         param['datalevel'] = self.datalevel
         param['datetime'] = self.datetime
         
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('call query_criteria')
+        logging.debug('\ncall query_criteria')
 
-        self.query_criteria (param, **kwargs)
+        self.query_criteria(param, **kwargs)
 
         return
-    #
-    #} end Archive.query_datetime
-    #
- 
-
 
     def query_position (self, datalevel, position, **kwargs):
-    #
-    #{ Archive.query_position
-    #
         """
-        'query_position' method search NEID data by 'position' 
+        Search NEID data by 'position' 
         
-        Required Inputs:
-        ---------------    
+        Arguments:
+            datalevel (string): HIRES
+            position (string): a position string in the format of 
+	            1.  circle ra dec radius;
+	            2.  polygon ra1 dec1 ra2 dec2 ra3 dec3 ra4 dec4;
+	            3.  box ra dec width height;
 
-        datalevel (string): HIRES
+	            All ra dec in J2000 coordinate.
 
-        position (string): a position string in the format of 
-	
-	1.  circle ra dec radius;
-	
-	2.  polygon ra1 dec1 ra2 dec2 ra3 dec3 ra4 dec4;
-	
-	3.  box ra dec width height;
-	
-	All ra dec in J2000 coordinate.
-             
-        e.g. 
+        Examples:    
             datalevel = 'hires',
             position = 'circle 230.0 45.0 0.5'
-
         
         Optional Input:
         ---------------    
@@ -454,7 +408,6 @@ class Archive(object):
       
         
 	format (string):  Output format: votable, ipac, csv, tsv (default: ipac)
-
         radius (float) = 1.0 (deg)
 
 	maxrec (integer):  maximum records to be returned 
@@ -511,35 +464,6 @@ class Archive(object):
         if self.debug:
             logging.debug ('')
             logging.debug (f'radius= {radius:f}')
-
-        """
-        coords = None
-        try:
-            print (f'resolving object name')
- 
-            coords = name_resolve.get_icrs_coordinates (object)
-        
-        except Exception as e:
-
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'name_resolve error: {str(e):s}')
-            
-            print (str(e))
-            return
-
-        ra = coords.ra.value
-        dec = coords.dec.value
-        
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'ra= {ra:f}')
-            logging.debug (f'dec= {dec:f}')
-        
-        self.position = 'circle ' + str(ra) + ' ' + str(dec) \
-            + ' ' + str(radius)
-	
-        """
 
         lookup = None
         try:
@@ -811,13 +735,8 @@ class Archive(object):
 
     
     def query_criteria (self, param, **kwargs):
-    #
-    #{ Archive.query_criteria
-    #
-        
         """
-        'query_criteria' method allows the search of NEID data by multiple
-        the parameters specified in a dictionary (param).
+        Search NEID data by multiple parameters specified in a dictionary (param).
 
         param: a dictionary containing a list of acceptable parameters:
 
@@ -865,331 +784,87 @@ class Archive(object):
 	         default: -1 or not specified will return all requested records
         """
 
-        if (self.debug == 0):
-
-            if ('debugfile' in kwargs):
-            
-                self.debug = 1
-                self.debugfname = kwargs.get ('debugfile')
-
-                if (len(self.debugfname) > 0):
-      
-                    logging.basicConfig (filename=self.debugfname, \
-                        level=logging.DEBUG)
-    
-                    with open (self.debugfname, 'w') as fdebug:
-                        pass
-
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('debug turned on')
-        
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('')
-            logging.debug ('Enter query_criteria')
-        
-        
-#
-#    retrieve keyword parameters
-#
-        if ('outpath' in kwargs): 
-            self.outpath = kwargs.get('outpath')
-
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'outpath= {self.outpath:s}')
-        
-        if ('cookiepath' in kwargs): 
-            self.cookiepath = kwargs.get('cookiepath')
-
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'cookiepath= {self.cookiepath:s}')
-
-        if ('token' in kwargs): 
-            self.token = kwargs.get('token')
-
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'token= {self.token:s}')
-
-        """
-        if (len(self.outpath) > 0):
-            param['outpath'] = self.outpath
-        
-        if (len(self.cookiepath) > 0):
-            param['cookiepath'] = self.cookiepath
-        
-        if (len(self.token) > 0):
-            param['token'] = self.token
-        """
-
+        logging.debug('\ndebug turned on')
+        logging.debug ('\n\nEnter query_criteria')
+        logging.debug (f'outpath= {self.outpath:s}')
+        logging.debug (f'cookiepath= {self.cookiepath:s}')
+        logging.debug (f'token= {self.token:s}')
 
         len_param = len(param)
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'len_param= {len_param:d}')
+        logging.debug (f'\nlen_param= {len_param:d}')
 
-            for k,v in param.items():
-                logging.debug (f'k, v= {k:s}, {str(v):s}')
+        for k,v in param.items():
+            logging.debug (f'k, v= {k:s}, {str(v):s}')
 
-#
-#    send url to server to construct the select statement
-#
-        self.format ='votable'
-        if ('format' in kwargs): 
-            self.format = kwargs.get('format')
+        # send url to server to construct the select statement
 
-        self.maxrec = -1 
-        if ('maxrec' in kwargs): 
-            self.maxrec = kwargs.get('maxrec')
-        
+        logging.debug (f'\nformat= {self.format:s}')
+        logging.debug (f'maxrec= {self.maxrec:d}')
 
-#        datatype = type (self.maxrec).__name__
-#        print (f'datatype= {datatype:s}')
+        data = urllib.parse.urlencode(param)
 
-        try:
-            self.maxrec = float(self.maxrec)
-            self.maxrec = int(self.maxrec)
-        except Exception as e:
-            print (f'Failed to convert maxrec: ' + str(self.maxrec) + \
-                ' to integer.')
-            return
+        logging.debug (f'\nbaseurl= {self.baseurl:s}')
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'format= {self.format:s}')
-            logging.debug (f'maxrec= {self.maxrec:d}')
+        logging.debug (f'\ntap_url= [{self.tap_url:s}]')
+        logging.debug (f'makequery_url= [{self.makequery_url:s}]')
 
-        data = urllib.parse.urlencode (param)
+        url = self.makequery_url + data
 
-#
-#    retrieve baseurl from conf class;
-#
-#    during dev or test, baseurl will be a keyword input
-#
-        self.baseurl = conf.server
+        logging.debug (f'\nurl= {url:s}')
 
-        if ('server' in kwargs):
-            self.baseurl = kwargs.get ('server')
+        query = self.__make_query(url)
+        logging.debug('\nreturned __make_query')
 
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'baseurl= {self.baseurl:s}')
-
-#
-#    urls for nph-tap.py, nph-koaLogin, nph-makeQyery, 
-#    nph-getKoa, and nph-getCaliblist
-#
-        self.tap_url = self.baseurl + 'TAP'
-        self.makequery_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidMakequery.py?'
-
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'tap_url= [{self.tap_url:s}]')
-            logging.debug (f'makequery_url= [{self.makequery_url:s}]')
-
-        url = self.makequery_url + data            
-
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'url= {url:s}')
-
-        query = ''
-        try:
-            query = self.__make_query (url) 
-
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('returned __make_query')
-  
-        except Exception as e:
-
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'Error: {str(e):s}')
-            
-            print (str(e))
-            return 
-        
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'query= {query:s}')
-       
         self.query = query
-
-
-#
-#    send tap query
-#
-        self.tap = None
-        if (len(self.cookiepath) > 0):
-            
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('xxx0')
-                logging.debug (f'cookiepath= {self.cookiepath:s}')
+        logging.debug(f'\nquery= {self.query:s}')
        
-            if self.debug:
-                
-                try:
-                    self.tap = NeidTap (self.tap_url, \
-                        format=self.format, \
-                        maxrec=self.maxrec, \
-                        cookiefile=self.cookiepath, \
-	                debug=1)
-                
-                except Exception as e:
-            
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'Error: {str(e):s}')
-                    
-                    print (str(e))
-                    return 
+        # send tap query
+        logging.debug('xxx0')
+        logging.debug(f'\ncookiepath= {self.cookiepath:s}')
 
-            else:
-                try:
-                    self.tap = NeidTap (self.tap_url, \
-                        format=self.format, \
-                        maxrec=self.maxrec, \
-                        cookiefile=self.cookiepath)
-                
-                except Exception as e:
-            
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'Error: {str(e):s}')
+        if len(self.cookiepath) > 0:
+            self.tap = NeidTap(self.tap_url, format=self.format, 
+                                maxrec=self.maxrec, cookiefile=self.cookiepath,
+                                debug=self.debug)
                     
-                    print (str(e))
-                    return 
-        
-        elif (len(self.token) > 0):
-            
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('xxx1')
-                logging.debug (f'token= {self.token:s}')
-       
-            if self.debug:
-                
-                try:
-                    self.tap = NeidTap (self.tap_url, \
-                        format=self.format, \
-                        maxrec=self.maxrec, \
-                        token=self.token, \
-	                debug=1)
-                
-                except Exception as e:
-            
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'Error: {str(e):s}')
-                    
-                    print (str(e))
-                    return 
-
-            else:
-                try:
-                    self.tap = NeidTap (self.tap_url, \
-                        format=self.format, \
-                        maxrec=self.maxrec, \
-                        token=self.token)
-                
-                except Exception as e:
-            
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'Error: {str(e):s}')
-                    
-                    print (str(e))
-                    return 
-        
-        else: 
-            if self.debug:
-                try:
-                    self.tap = NeidTap (self.tap_url, \
-                        format=self.format, \
-                        maxrec=self.maxrec, \
-	                debug=1)
-                
-                except Exception as e:
-            
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'Error: {str(e):s}')
-                    
-                    print (str(e))
-                    return 
-        
-            else:
-                try:
-                    self.tap = NeidTap (self.tap_url, \
-                        format=self.format, \
-                        maxrec=self.maxrec)
-        
-                except Exception as e:
-            
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'Error: {str(e):s}')
-                    
-                    print (str(e))
-                    return 
-        
-        if self.debug:
-            logging.debug('')
-            logging.debug('NeidTap initialized')
-            logging.debug('')
-            logging.debug(f'query= {query:s}')
-
-        print ('submitting request...')
-
-        if self.debug:
-            logging.debug('')
-            logging.debug('call self.tap.send_async with debug')
-            
-            retstr = self.tap.send_async (query, \
-                outpath=self.outpath, \
-                format=self.format, \
-                maxrec=self.maxrec, debug=1)
+        elif len(self.token > 0):
+            logging.debug ('xxx1')
+            logging.debug (f'token= {self.token:s}')
+            self.tap = NeidTap(self.tap_url,
+                                format=self.format,
+                                maxrec=self.maxrec,
+                                token=self.token,
+                                debug=self.debug)
         else:
-            logging.debug('')
-            logging.debug('call self.tap.send_async NO debug')
-            
-            retstr = self.tap.send_async (query, \
-                outpath=self.outpath, \
-                format=self.format, \
-                maxrec=self.maxrec)
+            self.tap = NeidTap(self.tap_url, \
+                                format=self.format, \
+                                maxrec=self.maxrec, \
+                                debug=self.debug)
+               
+        logging.debug('\nNeidTap initialized')
+        logging.debug(f'query= {query:s}')
+
+        print('submitting request...')
+
+        logging.debug('\ncall self.tap.send_async with debug')
+        retstr = self.tap.send_async(query,
+                                     outpath=self.outpath,
+                                     format=self.format,
+                                     maxrec=self.maxrec,
+                                     debug=self.debug)
         
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'return self.tap.send_async:')
-            logging.debug (f'retstr= {retstr:s}')
+        logging.debug(f'\nreturn self.tap.send_async:')
+        logging.debug(f'retstr= {retstr:s}')
 
         retstr_lower = retstr.lower()
 
-        indx = retstr_lower.find ('error')
-    
-#        if self.debug:
-#            logging.debug ('')
-#            logging.debug (f'indx= {indx:d}')
+        indx = retstr_lower.find('error')
 
-        if (indx >= 0):
-            print (retstr)
-            sys.exit()
-
-#
-#    no error: 
-#
-        print (retstr)
-        return
-    #
-    #} end Archive.query_criteria
-    #
-        
+        print(retstr)
+        if indx >= 0:
+            print(retstr)
+            return        
     
     def query_adql (self, query, **kwargs):
     #
@@ -2126,90 +1801,36 @@ class Archive(object):
                        
 
     def __make_query (self, url):
-    #
-    #{ Archive.__make_query
-    #
-       
-        if self.debug:
-            logging.debug ('')
-            logging.debug ('Enter __make_query:')
-            logging.debug (f'url= {url:s}')
+        logging.debug('Enter __make_query:')
+        logging.debug(f'url= {url:s}')
 
-        response = None
-        try:
-            response = requests.get (url, stream=True)
+        response = requests.get(url, stream=True)
+        logging.debug('request sent')
 
-            if self.debug:
-                logging.debug ('')
-                logging.debug ('request sent')
+        content_type = response.headers['Content-type']
+        logging.debug(f'content_type= {content_type:s}')
 
-        except Exception as e:
-           
-            self.msg = 'Error: ' + str(e)
-
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'exception: e= {str(e):s}')
-            
-            raise Exception (self.msg)
-
-
-        content_type = response.headers['content-type']
-
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'content_type= {content_type:s}')
-      
         query = ''
-        if (content_type == 'application/json'):
-                
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'response.text: {response.text:s}')
+        if content_type == 'application/json':
+            logging.debug(f'\nresponse.text: {response.text:s}')
 
-#
-#    error message
-#
-            try:
-                jsondata = json.loads (response.text)
-                 
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug ('jsondata loaded')
-                
-                self.status = jsondata['status']
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug (f'status: {self.status:s}')
-
-
-                if (self.status == 'ok'):
-                    query = jsondata['query']
-                    
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'query: {self.query:s}')
-
-                else:
-                    self.msg = jsondata['msg']
-                    
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'msg: {self.msg:s}')
-
-                    raise Exception (self.msg)
-
-            except Exception:
-                self.msg = 'returned JSON object parse error'
-                
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug ('JSON object parse error')
-      
-                
-                raise Exception (self.msg)
+            jsondata = json.loads(response.text)
+            logging.debug('\njsondata loaded')
             
-        return (query)
+            self.status = jsondata['status']
+            logging.debug(f'\nstatus: {self.status:s}')
+
+            if (self.status == 'ok'):
+                query = jsondata['query']
+                
+                logging.debug(f'\nquery: {query:s}')
+
+            else:
+                self.msg = jsondata['msg']
+
+                logging.debug (f'\nmsg: {self.msg:s}')
+        
+        return query
     #
     #}  end Archive.__make_query
     #
@@ -2645,165 +2266,95 @@ class NeidTap:
     #} end NeidTap.init
     #
 
-       
+    def send_async(self, query, **kwargs):
 
-    def send_async (self, query, **kwargs):
-    #
-    #{ NeidTap.send_async
-    #
-
-        debug = 0
-
-        if ('debug' in kwargs):
-            debug = kwargs.get('debug') 
-
-        if debug:
-            logging.debug ('')
-            logging.debug ('Enter send_async:')
+        logging.debug ('Enter send_async:')
  
         self.async_job = 1
         self.sync_job = 0
 
         url = self.url + '/async'
 
-        if debug:
-            logging.debug ('')
-            logging.debug (f'url= {url:s}')
-            logging.debug (f'query= {query:s}')
+        logging.debug ('')
+        logging.debug (f'\nurl= {url:s}')
+        logging.debug (f'query= {query:s}')
 
         self.datadict['query'] = query 
 
-    #
-    #    for async query, there is no maxrec limit
-    #
-        self.maxrec = '0'
+        # for async query, there is no maxrec limit
+        self.maxrec = 0
 
-        if ('format' in kwargs):
+        self.datadict['format'] = self.format              
+        logging.debug (f'format= {self.format:s}')
             
-            self.format = kwargs.get('format')
-            self.datadict['format'] = self.format              
-
-            if debug:
-                logging.debug ('')
-                logging.debug (f'format= {self.format:s}')
-            
-        if ('maxrec' in kwargs):
-            
-            self.maxrec = kwargs.get('maxrec')
-            self.datadict['maxrec'] = self.maxrec              
-            
-            if debug:
-                logging.debug ('')
-                logging.debug (f'maxrec= {self.maxrec:d}')
+        self.datadict['maxrec'] = self.maxrec              
+        logging.debug (f'maxrec= {self.maxrec:d}')
         
         for key in self.datadict:
-
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'key= {key:s} val= {str(self.datadict[key]):s}')
+            logging.debug (f'key= {key:s} val= {str(self.datadict[key]):s}')
     
-        self.oupath = ''
         if ('outpath' in kwargs):
             self.outpath = kwargs.get('outpath')
   
-        try:
+        if (len(self.cookiepath) > 0):
+            self.response = requests.post(url, data= self.datadict, \
+                                          cookies=self.cookiejar, allow_redirects=False)
+        else: 
+            self.response = requests.post (url, data= self.datadict, \
+            allow_redirects=False)
 
-            if (len(self.cookiepath) > 0):
-        
-                self.response = requests.post (url, data= self.datadict, \
-	            cookies=self.cookiejar, allow_redirects=False)
-            else: 
-                self.response = requests.post (url, data= self.datadict, \
-	            allow_redirects=False)
-
-            if debug:
-                logging.debug ('')
-                logging.debug ('request sent')
-
-        except Exception as e:
-           
-            self.status = 'error'
-            self.msg = 'Error: ' + str(e)
-	    
-            if debug:
-                logging.debug ('')
-                logging.debug (f'exception: e= {str(e):s}')
-            
-            return (self.msg)
-
-     
+        logging.debug ('request sent')
+                            
         self.statusurl = ''
 
-        if debug:
-            logging.debug ('')
-            logging.debug (f'status_code= {self.response.status_code:d}')
-            logging.debug ('self.response: ')
-            logging.debug (self.response)
-            logging.debug ('self.response.headers: ')
-            logging.debug (self.response.headers)
-            
-        if debug:
-            logging.debug ('')
-            logging.debug (f'status_code= {self.response.status_code:d}')
+        logging.debug (f'status_code= {self.response.status_code:d}')
+        logging.debug ('self.response: ')
+        logging.debug (self.response)
+        logging.debug ('self.response.headers: ')
+        logging.debug (self.response.headers)
+        logging.debug (f'status_code= {self.response.status_code:d}')
             
     #
     #    if status_code != 303: probably error message
     #
         if (self.response.status_code != 303):
             
-            if debug:
-                logging.debug ('')
-                logging.debug ('case: not re-direct')
+            logging.debug ('case: not re-direct')
        
             self.content_type = self.response.headers['Content-type']
             self.encoding = self.response.encoding
         
-            if debug:
-                logging.debug ('')
-                logging.debug (f'content_type= {self.content_type:s}')
-                logging.debug ('encoding= ')
-                logging.debug (self.encoding)
-
+            logging.debug (f'\ncontent_type= {self.content_type:s}')
+            logging.debug ('encoding= ')
+            logging.debug (self.encoding)
 
             data = None
             self.status = ''
             self.msg = ''
            
             if (self.content_type == 'application/json'):
-    #
-    #    error message
-    #
-                if debug:
-                    logging.debug ('')
-                    logging.debug ('self.response:')
-                    logging.debug (self.response.text)
+                logging.debug ('self.response:')
+                logging.debug (self.response.text)
       
                 try:
                     data = self.response.json()
                     
                 except Exception as e:
-                
-                    if debug:
-                        logging.debug ('')
-                        logging.debug (f'JSON object parse error: {str(e):s}')
+                    logging.debug (f'JSON object parse error: {str(e):s}')
       
                     self.status = 'error'
                     self.msg = 'JSON parse error: ' + str(e)
                 
-                    if debug:
-                        logging.debug ('')
-                        logging.debug (f'status= {self.status:s}')
-                        logging.debug (f'msg= {self.msg:s}')
+                    logging.debug (f'status= {self.status:s}')
+                    logging.debug (f'msg= {self.msg:s}')
 
                     return (self.msg)
 
                 self.status = data['status']
                 self.msg = data['msg']
                 
-                if debug:
-                    logging.debug ('')
-                    logging.debug (f'status= {self.status:s}')
-                    logging.debug (f'msg= {self.msg:s}')
+                logging.debug (f'status= {self.status:s}')
+                logging.debug (f'msg= {self.msg:s}')
 
                 if (self.status == 'error'):
                     self.msg = 'Error: ' + data['msg']
@@ -2813,12 +2364,11 @@ class NeidTap:
     #    retrieve statusurl
     #
         self.statusurl = ''
+        import pdb; pdb.set_trace()
         if (self.response.status_code == 303):
             self.statusurl = self.response.headers['Location']
 
-        if debug:
-            logging.debug ('')
-            logging.debug (f'statusurl= {self.statusurl:s}')
+        logging.debug(f'statusurl= {self.statusurl:s}')
 
         if (len(self.statusurl) == 0):
             self.msg = 'Error: failed to retrieve statusurl from re-direct'
@@ -2835,10 +2385,9 @@ class NeidTap:
                 self.tapjob = TapJob (\
                     self.statusurl)
         
-            if debug:
-                logging.debug ('')
-                logging.debug (f'tapjob instantiated')
-                logging.debug (f'phase= {self.tapjob.phase:s}')
+            logging.debug ('')
+            logging.debug (f'tapjob instantiated')
+            logging.debug (f'phase= {self.tapjob.phase:s}')
        
        
         except Exception as e:
@@ -2846,9 +2395,7 @@ class NeidTap:
             self.status = 'error'
             self.msg = 'Error: ' + str(e)
 	    
-            if debug:
-                logging.debug ('')
-                logging.debug (f'exception: e= {str(e):s}')
+            logging.debug (f'exception: e= {str(e):s}')
             
             return (self.msg)    
         
@@ -2858,9 +2405,7 @@ class NeidTap:
         
         phase = self.tapjob.phase
         
-        if debug:
-            logging.debug ('')
-            logging.debug (f'phase: {phase:s}')
+        logging.debug (f'phase: {phase:s}')
             
         if ((phase.lower() != 'completed') and (phase.lower() != 'error')):
             
@@ -2870,19 +2415,16 @@ class NeidTap:
                 time.sleep (2)
                 phase = self.tapjob.get_phase()
         
-                if debug:
-                    logging.debug ('')
-                    logging.debug ('here0-1')
-                    logging.debug (f'phase= {phase:s}')
+                logging.debug ('here0-1')
+                logging.debug (f'phase= {phase:s}')
             
         if debug:
-            logging.debug ('')
             logging.debug ('here0-2')
             logging.debug (f'phase= {phase:s}')
             
-    #
-    #    phase == 'error'
-    #
+    
+       # phase == 'error'
+    
         if (phase.lower() == 'error'):
 	   
             self.status = 'error'
@@ -2898,32 +2440,26 @@ class NeidTap:
             logging.debug ('')
             logging.debug ('here2: phase is completed')
             
-    #
-    #   phase == 'completed' 
-    #
+    
+        # phase == 'completed' 
+    
         self.resulturl = self.tapjob.resulturl
-        if debug:
-            logging.debug ('')
-            logging.debug (f'resulturl= {self.resulturl:s}')
+        logging.debug (f'resulturl= {self.resulturl:s}')
 
-    #
-    #   send resulturl to retrieve result table
-    #
+    
+        # send resulturl to retrieve result table
         try:
             self.response_result = requests.get (self.resulturl, stream=True)
         
-            if debug:
-                logging.debug ('')
-                logging.debug ('resulturl request sent')
+            logging.debug ('resulturl request sent')
 
         except Exception as e:
            
             self.status = 'error'
             self.msg = 'Error: ' + str(e)
 	    
-            if debug:
-                logging.debug ('')
-                logging.debug (f'exception: e= {str(e):s}')
+            logging.debug ('')
+            logging.debug (f'exception: e= {str(e):s}')
             
             raise Exception (self.msg)    
      
@@ -2933,76 +2469,13 @@ class NeidTap:
     #
         if (len(self.outpath) > 0):
            
-            if debug:
-                logging.debug ('')
-                logging.debug ('write data to outpath:')
+            logging.debug ('write data to outpath:')
 
             self.msg = self.save_data (self.outpath)
             
-            if debug:
-                logging.debug ('')
-                logging.debug (f'returned save_data: msg= {self.msg:s}')
-
-            return (self.msg)
-
-    #
-    #    outpath is not given: return resulturl
-    #
-        """
-        if (len(self.outpath) == 0):
-           
-            self.resulturl = self.tapjob.resulturl
-            if debug:
-                logging.debug ('')
-                logging.debug (f'resulturl= {self.resulturl:s}')
-
-            return (self.resulturl)
-
-        try:
-            self.tapjob.get_result (self.outpath)
-
-            if debug:
-                logging.debug ('')
-                logging.debug (f'returned self.tapjob.get_result')
-        
-        except Exception as e:
-            
-            self.status = 'error'
-            self.msg = 'Error: ' + str(e)
-	    
-            if debug:
-                logging.debug ('')
-                logging.debug (f'exception: e= {str(e):s}')
-            
-            return (self.msg)    
-        
-        if debug:
-            logging.debug ('')
-            logging.debug ('got here: download result successful')
-      
-        self.status = 'ok'
-        self.msg = 'Result downloaded to file: [' + self.outpath + ']'
-	    
-        if debug:
-            logging.debug ('')
-            logging.debug (f'self.msg = {self.msg:s}')
-       
-        
-	self.msg = self.save_data (self.outpath)
-            
-	
-        if debug:
-            logging.debug ('')
             logging.debug (f'returned save_data: msg= {self.msg:s}')
 
-
-        return (self.msg) 
-        """
-
-    #
-    #} end NeidTap.send_async
-    #
-
+            return (self.msg)
 
     def send_sync (self, query, **kwargs):
     #
@@ -4010,6 +3483,3 @@ class TapJob:
 #
 #} end TapJob class
 #
-
-Neid = Archive()
-print ('Neid instantiated')
