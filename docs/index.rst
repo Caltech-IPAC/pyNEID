@@ -27,7 +27,7 @@ The :ref:`Archive class <archive>` contains many useful methods for working with
 
 This package (alpha-release) is under active development by the NASA Exoplanet Science Institute.
 
-Please report any bugs, issues, or feature requests to the `GitHub Issue Tracker <https://github.com/Caltech-IPAC/pyNEID/issues>`_.
+Please report any bugs, issues, or feature requests to the `NEID Help Desk <mailto: neid-help@ipac.caltech.edu>`_.
 
 .. toctree::
    :maxdepth: 2
