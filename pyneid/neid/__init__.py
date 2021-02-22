@@ -20,8 +20,7 @@ class Conf (_config.ConfigNamespace):
 
 conf = Conf()
 
-from .core import Neid, Archive, NeidTap, TapJob
+from .core import Neid, Archive, NeidTap, TapJob, objLookup
 
 __all__ = ['Neid', 'Archive', 'NeidTap', 'TapJob', 
-           'Conf', 'conf',
-           ] 
+           'Conf', 'conf'] 
