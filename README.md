@@ -1,6 +1,7 @@
 NEID Table Access Protocol (TAP) Client
 ======================================
 
+[![Build Status](https://www.travis-ci.com/Caltech-IPAC/pyNEID.svg?branch=master)](https://www.travis-ci.com/Caltech-IPAC/pyNEID)
 [![Documentation Status](https://readthedocs.org/projects/pyneid/badge/?version=latest)](https://pyneid.readthedocs.io/en/latest/?badge=latest)
 [![Coverage Status](https://coveralls.io/repos/github/Caltech-IPAC/pyNEID/badge.svg?branch=master)](https://coveralls.io/github/Caltech-IPAC/pyNEID?branch=master)
 
