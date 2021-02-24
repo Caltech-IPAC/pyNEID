@@ -1,0 +1,10 @@
+language: python
+
+services:
+  - docker
+
+install:
+  - docker build --tag pyneid .
+
+script:
+  - docker run --env TRAVIS_JOB_ID=$TRAVIS_JOB_ID pyneid
