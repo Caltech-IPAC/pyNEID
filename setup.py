@@ -20,7 +20,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'License :: OSI Approved :: MIT License',
         'Topic :: Scientific/Engineering :: Astronomy'],
-    packages=['pyneid', 'pyneid/neid'],
+    packages=['pyneid'],
     data_files=[],
     install_requires=reqs,
     python_requires='>= 3.6',
