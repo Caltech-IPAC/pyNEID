@@ -1,7 +1,12 @@
 NEID Table Access Protocol (TAP) Client
 ======================================
 
+[![Documentation Status](https://readthedocs.org/projects/pyneid/badge/?version=latest)](https://pyneid.readthedocs.io/en/latest/?badge=latest)
+[![Coverage Status](https://coveralls.io/repos/github/Caltech-IPAC/pyNEID/badge.svg?branch=master)](https://coveralls.io/github/Caltech-IPAC/pyNEID?branch=master)
+
 **This repository is currently in alpha release. Features may be broken or missing. Please report any bugs to neid-help@ipac.caltech.edu**
+
+Documentation is available on `ReadTheDocs <https://pyneid.readthedocs.io/en/latest/>`_
 
 This package provides API access to the NEID Archive: neid.ipac.caltech.edu
 
