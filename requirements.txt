@@ -1,0 +1,8 @@
+xmltodict
+lxml
+bs4
+requests
+astropy
+pytest
+pytest-cov
+coveralls

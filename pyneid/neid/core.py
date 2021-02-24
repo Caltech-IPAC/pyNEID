@@ -19,16 +19,29 @@ from astropy.table import Table, Column
 from . import conf
 
 
-""" { Archive class
-"""
 class Archive:
-    """ 'Archive' class provides NEID archive access functions for searching 
-    NEID data via TAP interface.  
+    """ 
+        'Archive' class provides NEID archive access functions for searching 
+        NEID data via TAP interface.  
     
-    The user's NEID credentials (given at login as a cookie file or a token 
-    string) are used to search the proprietary data.
+        The user's NEID credentials (given at login as a cookie file or a token 
+        string) are used to search the proprietary data.
+
+        Arguments:
+            debugfile: a file path for the debug output
+
+        In the following examples, "neid" will represent an instance of the 
+        Archive class:
+
+        Examples:
+            >>> import os
+            >>> import sys
+
+            >>> from pyneid.neid import Neid
+
+            >>> neid = Archive()
     """
-    
+
     tap = None
 
     parampath = ''
@@ -51,30 +64,7 @@ class Archive:
     debugfname = './archive.debug'    
     debug = 0    
 
-
-
-    """{ Archive.init module
-    """ 
     def __init__(self, **kwargs):
-        
-        """'init' method initialize the class with optional debugfile flag
-
-        Optional inputs:
-        ----------------
-        debugfile: a file path for the debug output
- 
-        example:
-
-        In the following examples, "neid" will represent an instance of the 
-        Archive class:
-
-        import os
-        import sys
-
-        from pyneid.neid import Neid
-
-        neid = Archive()
-	"""
         
         if ('debugfile' in kwargs):
             
@@ -92,8 +82,6 @@ class Archive:
         if self.debug:
             logging.debug ('')
             logging.debug ('Enter Archive.init:')
-
-
 
         """retrieve baseurl from conf class;
         during dev or test, baseurl will be a keyword input
@@ -128,32 +116,12 @@ class Archive:
       
         return
     
-    """} end Archive.init
-    """ 
-
-
-    """{ Archive.login
-    """
     def login (self, **kwargs):
-        
-        """login method validates a user has a valid NEID account; 
+        """
+        login method validates a user has a valid NEID account; 
         it takes two 'keyword' arguments: userid and password. If the inputs 
         are not provided in the keyword, the auth method prompts for inputs.
 
-        Required keyword input:
-        -----------------------     
-	userid     (string): a valid user id  in the NEID's user table.
-        
-        password   (string): a valid password in the NEID's user table. 
-        
-        Optional keyword input:
-        -----------------------     
-        cookiepath (string): a file path provided by the user to save 
-                 returned cookie in a local file for use anytime in the future
-                 data search. 
-
-        Output:
-        -------     
         login method returns both cookie header and a token string in 
         the returned message file.  
         
@@ -161,19 +129,22 @@ class Archive:
         
         The token string will be saved in the variable "token" in memory to 
         be used for other Archive methods in the current session.
-        
-        
-        Calling synopsis: 
-    
-        neid.login (userid='xxxx', password='xxxxxx', cookiepath=cookiepath), or
-        
-        neid.login (userid='xxxx', password='xxxxxx', token=token_string), or
 
-
-        neid.login (cookiepath=cookiepath): and the program will prompt for 
-                                 userid and password 
+        Arguments:
+	        userid (string): a valid user id  in the NEID's user table.
+            password (string): a valid password in the NEID's user table.   
+            cookiepath (string): (optional) a file path provided by the user to
+                    save returned cookie in a local file for use anytime in the future data search. 
         
-        neid.login (): and the program will prompt for userid and password 
+        Examples:    
+            # without prompt
+            >>> neid.login(userid='xxxx', password='xxxxxx', cookiepath=cookiepath)
+            # or
+            >>> neid.login(userid='xxxx', password='xxxxxx', token=token_string)
+            # or
+            # prompt for userid and password
+            >>> neid.login(cookiepath=cookiepath) 
+            >>> neid.login()
         """
 
         if (self.debug == 0):
@@ -377,67 +348,46 @@ class Archive:
         print (self.msg)
         return
     
-    """} end Archive.login
-    """
-
-
-    """{ Archive.query_datetime
-    """
     def query_datetime (self, datalevel, datetime, **kwargs):
         
         """'query_datetime' method search NEID data by 'datetime' range
         
-        Required Position Inputs:
-        ---------------    
-        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
-        datetime (string): a datetime string in the format of 
-            datetime1/datetime2 where '/' separates the two datetime values` 
-            of format 'yyyy-mm-dd hh:mm:ss'
+            Arguments:
+                datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
+                datetime (string): a datetime string in the format of 
+                    datetime1/datetime2 where '/' separates the two datetime values` 
+                    of format 'yyyy-mm-dd hh:mm:ss'
+                outpath (string): (optional) a full output filepath of the returned metadata 
+                    table
+                cookiepath (string): (optional) a full cookie file path saved from login for 
+                    querying the proprietary NEID data.
+                token (string): (optional) a token string save in memory from login for querying 
+                    the proprietary NEID data; the token is only valid for the 
+                    current session.
+                format (string): (optional) Output format: votable, ipac, csv, tsv 
+                            (default: votable)
+                maxrec (integer): (optional) maximum records to be returned 
+                    default: -1 or not specified will return all requested records
 
-            the following inputs are acceptable:
+            Note:
+                The following inputs are acceptable for the datetime parameter:
 
-            datetime1/: will search data with datetime later than (>=) 
-                        datetime1.
-            
-            /datetime2: will search data with datetime earlier than (<=)
-                        datetime2.
+                'datetime1/': will search data with datetime later than (>=) datetime1
 
-            datetime1: will search data with datetime equal to (=) datetime1;
-                this is not recommended.
+                '/datetime2': will search data with datetime earlier than (<=) datetime2
 
-        e.g. 
-            datalevel = 'l0',
-            datetime = '2020-11-16 06:10:55/2020-11-18 00:00:00' 
+                'datetime1': will search data with datetime equal to (=) datetime1 (this is not recommended)
 
-        e.g. 
-            datalevel = 'l1',
-            datetime = '2020-11-16 06:10:55/' 
+            Examples:
+                >>> datalevel = 'l0',
+                >>> datetime = '2020-11-16 06:10:55/2020-11-18 00:00:00' 
 
-        e.g. 
-            datalevel = 'l2',
-            datetime = '/2020-112-18 00:00:00' 
+                >>> datalevel = 'l1',
+                >>> datetime = '2020-11-16 06:10:55/' 
 
+                >>> datalevel = 'l2',
+                >>> datetime = '/2020-112-18 00:00:00' 
 
-        Optional Keyword Inputs:
-	----------------
-        outpath (string): a full output filepath of the returned metadata 
-            table
-      
-        For searching proprietary NEID data, either the cookiepath or 
-        the token string saved from "login" is needed:  
-
-        cookiepath (string): a full cookie file path saved from login for 
-            querying the proprietary NEID data.
-        
-        token (string): a token string save in memory from login for querying 
-            the proprietary NEID data; the token is only valid for the 
-            current session.
-      
-	format (string):  Output format: votable, ipac, csv, tsv 
-	                  (default: votable)
-        
-	maxrec (integer):  maximum records to be returned 
-	         default: -1 or not specified will return all requested records
         """
  
         if (self.debug == 0):
@@ -498,58 +448,39 @@ class Archive:
         self.query_criteria (param, **kwargs)
 
         return
-    
-    """} end Archive.query_datetime
-    """ 
- 
 
-    """{ Archive.query_position
-    """
     def query_position (self, datalevel, position, **kwargs):
     
         """
         'query_position' method search NEID data by 'position' 
         
-        Required Inputs:
-        ---------------    
+        Arguments:
+            datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
+            datetime (string): a datetime string as specified in `qurey_datetime`
+            position (string): a position string in the format of 
+	        outpath (string): (optional) a full output filepath of the returned metadata 
+                table
+            cookiepath (string): (optional) a full cookie file path saved from login for 
+                querying the proprietary NEID data.
+            token (string): (optional) a token string save in memory from login for querying 
+                the proprietary NEID data; the token is only valid for the 
+                current session.
+            format (string): (optional) votable, ipac, csv, tsv  (default: ipac)
+	        maxrec (integer): (optional) maximum records to be returned 
+	            default: -1 or not specified will return all requested records
 
-        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
-        datetime (string): a datetime string in the format of 
-
-        position (string): a position string in the format of 
-	
-	1.  circle ra dec radius;
-	
-	2.  polygon ra1 dec1 ra2 dec2 ra3 dec3 ra4 dec4;
-	
-	3.  box ra dec width height;
-	
-	All ra dec in J2000 coordinate.
-             
-        e.g. 
-            datalevel = 'hires',
-            position = 'circle 230.0 45.0 0.5'
-
+        Note:
+            Position can be a string in the following formats
+                1.  circle ra dec radius;
+                2.  polygon ra1 dec1 ra2 dec2 ra3 dec3 ra4 dec4;
+                3.  box ra dec width height;
         
-        Optional Input:
-        ---------------    
-        outpath (string): a full output filepath of the returned metadata 
-            table
-      
-        For searching proprietary NEID data, either the cookiepath or 
-        the token string saved from "login" is needed:  
+            All ra dec should be specified in J2000 coordinates.
 
-        cookiepath (string): a full cookie file path saved from login for 
-            querying the proprietary NEID data.
-        
-        token (string): a token string save in memory from login for querying 
-            the proprietary NEID data; the token is only valid for the 
-            current session.
-      
-        format (string): votable, ipac, csv, tsv  (default: ipac)
-	
-	maxrec (integer):  maximum records to be returned 
-	         default: -1 or not specified will return all requested records
+        Examples:  
+            >>> datalevel = 'l1',
+            >>> position = 'circle 230.0 45.0 0.5'
+
         """
    
         if (self.debug == 0):
@@ -607,54 +538,31 @@ class Archive:
 
         return
     
-    """} end Archive.query_position
-    """ 
-        
-
-    """{ Archive.query_object
-    """
     def query_object (self, datalevel, object, **kwargs):
         
         """
-        'query_object' method search NEID data by 'object name' 
-        
-        Required Inputs:
-        ---------------    
-
-        datalevel: l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
-
-        object (string): an object name resolvable by SIMBAD, NED, and
-            ExoPlanet's name_resolve; 
-       
+        'query_object' method search NEID data by 'object name'.
         This method resolves the object name into coordiates to be used as the
-	center of the circle position search with default radius of 0.5 deg.
+        center of the circle position search with default radius of 0.5 deg.
+ 
+        Arguments:
+            datalevel: l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
+            object (string): an object name resolvable by SIMBAD, NED, and
+                ExoPlanet's name_resolve; 
+	        outpath (string): (optional) a full output filepath of the returned metadata 
+                table
+            cookiepath (string): (optional) a full cookie file path saved from login for 
+                querying the proprietary NEID data.
+            token (string): (optional) a token string save in memory from login for querying 
+                the proprietary NEID data; the token is only valid for the 
+                current session.
+            format (string): (optional) votable, ipac, csv, tsv  (default: ipac)
+	        maxrec (integer): (optional) maximum records to be returned 
+	            default: -1 or not specified will return all requested records
 
-        e.g. 
-            datalevel = 'hires',
+        Examples: 
+            datalevel = 'l1',
             object = 'WD 1145+017'
-
-        Optional Input:
-        ---------------    
-        outpath (string): a full output filepath of the returned metadata 
-            table
-      
-        For searching proprietary NEID data, either the cookiepath or 
-        the token string saved from "login" is needed:  
-
-        cookiepath (string): a full cookie file path saved from login for 
-            querying the proprietary NEID data.
-        
-        token (string): a token string save in memory from login for querying 
-            the proprietary NEID data; the token is only valid for the 
-            current session.
-      
-        
-	format (string):  Output format: votable, ipac, csv, tsv (default: ipac)
-
-        radius (float) = 1.0 (deg)
-
-	maxrec (integer):  maximum records to be returned 
-	         default: -1 or not specified will return all requested records
         """
    
         if (self.debug == 0):
@@ -707,35 +615,6 @@ class Archive:
         if self.debug:
             logging.debug ('')
             logging.debug (f'radius= {radius:f}')
-
-        """
-        coords = None
-        try:
-            print (f'resolving object name')
- 
-            coords = name_resolve.get_icrs_coordinates (object)
-        
-        except Exception as e:
-
-            if self.debug:
-                logging.debug ('')
-                logging.debug (f'name_resolve error: {str(e):s}')
-            
-            print (str(e))
-            return
-
-        ra = coords.ra.value
-        dec = coords.dec.value
-        
-        if self.debug:
-            logging.debug ('')
-            logging.debug (f'ra= {ra:f}')
-            logging.debug (f'dec= {dec:f}')
-        
-        self.position = 'circle ' + str(ra) + ' ' + str(dec) \
-            + ' ' + str(radius)
-	
-        """
 
         lookup = None
         try:
@@ -802,54 +681,27 @@ class Archive:
 
         return
     
-    """} end  Archive.query_object
-    """
-
-
-    """{ Archive.query_qobject
-    """
     def query_qobject (self, datalevel, qobject, **kwargs):
-        
         """
-        'query_qobject' method search NEID data for 'qobject' column value
-        
-        Required Inputs:
-        ---------------    
-
-        datalevel: l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
-
-        qobject (string): an object name resolvable by SIMBAD, NED, and
-            ExoPlanet's name_resolve; 
-       
+        'query_qobject' method search NEID data for 'qobject' column value. 
         This method resolves the object name into coordiates to be used as the
-	center of the circle position search with default radius of 0.5 deg.
+	    center of the circle position search with default radius of 0.5 deg.
 
-        e.g. 
-            datalevel = 'l0',
-            qobject = 'HD 10700'
+        Arguments:    
+            datalevel: l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
+            qobject (string): an object name as specified in the QOBJECT column.
+                This is usually the Gaia DR2 ID
+	        outpath (string): (optional) a full output filepath of the returned metadata 
+                table
+            cookiepath (string): (optional) a full cookie file path saved from login for 
+                querying the proprietary NEID data.
+            token (string): (optional) a token string save in memory from login for querying 
+                the proprietary NEID data; the token is only valid for the 
+                current session.
+            format (string): (optional) votable, ipac, csv, tsv  (default: ipac)
+	        maxrec (integer): (optional) maximum records to be returned 
+	            default: -1 or not specified will return all requested records
 
-        Optional Input:
-        ---------------    
-        outpath (string): a full output filepath of the returned metadata 
-            table
-      
-        For searching proprietary NEID data, either the cookiepath or 
-        the token string saved from "login" is needed:  
-
-        cookiepath (string): a full cookie file path saved from login for 
-            querying the proprietary NEID data.
-        
-        token (string): a token string save in memory from login for querying 
-            the proprietary NEID data; the token is only valid for the 
-            current session.
-      
-        
-	format (string):  Output format: votable, ipac, csv, tsv (default: ipac)
-
-        radius (float) = 1.0 (deg)
-
-	maxrec (integer):  maximum records to be returned 
-	         default: -1 or not specified will return all requested records
         """
    
         if (self.debug == 0):
@@ -915,51 +767,25 @@ class Archive:
         self.query_criteria (param, **kwargs)
 
         return
-    
-    """} end  Archive.query_object
-    """
 
-
-
-    """{ Archive.query_piname
-    """
     def query_piname (self, datalevel, piname, **kwargs):
-        
         """
-        'query_piname' method search NEID data by 'piname' 
+        'query_piname' method search NEID data by PI name 
         
-        Required Inputs:
-        ---------------    
-
-        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
-        datetime (string): a datetime string in the format of 
-
-        piname (string): PI name as formated in the project's catalog 
-       
-        e.g. 
-            datalevel = 'l0',
-            piname = 'Smith, John'
-
-        Optional Input:
-        ---------------    
-        outpath (string): a full output filepath of the returned metadata 
-            table
-
-        For searching proprietary NEID data, either the cookiepath or 
-        the token string saved from "login" is needed:  
-
-        cookiepath (string): a full cookie file path saved from login for 
-            querying the proprietary NEID data.
-        
-        token (string): a token string save in memory from login for querying 
-            the proprietary NEID data; the token is only valid for the 
-            current session.
-      
-        
-	format (string):  Output format: votable, ipac, csv, tsv (default: ipac)
-
-	maxrec (integer):  maximum records to be returned 
-	         default: -1 or not specified will return all requested records
+        Arguments:    
+            datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
+            datetime (string): a datetime string in the format of 
+            piname (string): PI name as formated in the project's catalog 
+       	    outpath (string): (optional) a full output filepath of the returned metadata 
+                table
+            cookiepath (string): (optional) a full cookie file path saved from login for 
+                querying the proprietary NEID data.
+            token (string): (optional) a token string save in memory from login for querying 
+                the proprietary NEID data; the token is only valid for the 
+                current session.
+            format (string): (optional) votable, ipac, csv, tsv  (default: ipac)
+	        maxrec (integer): (optional) maximum records to be returned 
+	            default: -1 or not specified will return all requested records
         """
    
         if (self.debug == 0):
@@ -1016,50 +842,25 @@ class Archive:
         self.query_criteria (param, **kwargs)
 
         return
-    
-    """} end  Archive.query_piname
-    """
-        
 
-    
-    """{ Archive.query_program
-    """
     def query_program (self, datalevel, program, **kwargs):
         """
         'query_program' method search NEID data by 'program' 
         
-        Required Inputs:
-        ---------------    
-
-        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
-        datetime (string): a datetime string in the format of 
-
-        program (string): program ID in the project's catalog 
-       
-        e.g. 
-            datalevel = 'l0',
-            program = '2019B-0268'
-
-        Optional Input:
-        ---------------    
-        outpath (string): a full output filepath of the returned metadata 
-            table
-
-        For searching proprietary NEID data, either the cookiepath or 
-        the token string saved from "login" is needed:  
-
-        cookiepath (string): a full cookie file path saved from login for 
-            querying the proprietary NEID data.
-        
-        token (string): a token string save in memory from login for querying 
-            the proprietary NEID data; the token is only valid for the 
-            current session.
-      
-        
-	format (string):  Output format: votable, ipac, csv, tsv (default: ipac)
-
-	maxrec (integer):  maximum records to be returned 
-	         default: -1 or not specified will return all requested records
+        Arguments:
+            datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
+            datetime (string): datetime string
+            program (string): program ID in the project's catalog 
+            outpath (string): (optional) a full output filepath of the returned metadata 
+                table
+            cookiepath (string): (optional) a full cookie file path saved from login for 
+                querying the proprietary NEID data.
+            token (string): (optional) a token string save in memory from login for querying 
+                the proprietary NEID data; the token is only valid for the 
+                current session.
+            format (string): (optional) votable, ipac, csv, tsv  (default: ipac)
+	        maxrec (integer): (optional) maximum records to be returned 
+	            default: -1 or not specified will return all requested records
         """
    
         if (self.debug == 0):
@@ -1117,63 +918,25 @@ class Archive:
 
         return
     
-    """} end  Archive.query_program
-    """
-
-
-    
-    
-    """{ Archive.query_criteria
-    """
     def query_criteria (self, param, **kwargs):
-        
         """
         'query_criteria' method allows the search of NEID data by multiple
         the parameters specified in a dictionary (param).
 
-        param: a dictionary containing a list of acceptable parameters:
+        Arguments:
+            param (dict): a dictionary containing the following keys; datalevel, datetime, position, target.
+                See individual methods for input formating. 
+            outpath (string): (optional) a full output filepath of the returned metadata 
+                table
+            cookiepath (string): (optional) a full cookie file path saved from login for 
+                querying the proprietary NEID data.
+            token (string): (optional) a token string save in memory from login for querying 
+                the proprietary NEID data; the token is only valid for the 
+                current session.
+            format (string): (optional) votable, ipac, csv, tsv  (default: ipac)
+	        maxrec (integer): (optional) maximum records to be returned 
+	            default: -1 or not specified will return all requested records
 
-        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
-        datetime (string): a datetime range string in the format of 
-            datetime1/datetime2, '/' being the separator between first
-            and second dateetime valaues.  
-	    where datetime format is 'yyyy-mm-dd hh:mm:ss'
-            
-        position(string): a position string in the format of 
-	
-	    1.  circle ra dec radius;
-	
-	    2.  polygon ra1 dec1 ra2 dec2 ra3 dec3 ra4 dec4;
-	
-	    3.  box ra dec width height;
-	
-	    all in ra dec in J2000 coordinate.
-             
-	target (string): target name used in the project (qobject), 
-            this will be searched against the database.
-
-
-        Optional parameters:
-        --------------------
-        outpath (string): a full output filepath of the returned metadata 
-            table
-      
-        For searching proprietary NEID data, either the cookiepath or 
-        the token string saved from "login" is needed:  
-
-        cookiepath (string): a full cookie file path saved from login for 
-            querying the proprietary NEID data.
-        
-        token (string): a token string save in memory from login for querying 
-            the proprietary NEID data; the token is only valid for the 
-            current session.
-      
-        
-	format (string): output table format -- votable, ipac, csv, tsv;
-            default: ipac
-	    
-	maxrec (integer):  maximum records to be returned 
-	         default: -1 or not specified will return all requested records
         """
 
         if (self.debug == 0):
@@ -1225,18 +988,6 @@ class Archive:
             logging.debug ('')
             logging.debug (f'token= {self.token:s}')
 
-        """
-        if (len(self.outpath) > 0):
-            param['outpath'] = self.outpath
-        
-        if (len(self.cookiepath) > 0):
-            param['cookiepath'] = self.cookiepath
-        
-        if (len(self.token) > 0):
-            param['token'] = self.token
-        """
-
-
         len_param = len(param)
 
         if self.debug:
@@ -1257,10 +1008,6 @@ class Archive:
         if ('maxrec' in kwargs): 
             self.maxrec = kwargs.get('maxrec')
         
-        """datatype = type (self.maxrec).__name__
-        print (f'datatype= {datatype:s}')
-        """
-
         try:
             self.maxrec = float(self.maxrec)
             self.maxrec = int(self.maxrec)
@@ -1494,43 +1241,26 @@ class Archive:
         print (retstr)
         return
     
-    """} end Archive.query_criteria
-    """
-        
-    
-    
-    """{ Archive.query_adql
-    """
+
     def query_adql (self, query, **kwargs):
        
         """
         'query_adql' method receives a qualified ADQL query string from
-	user input.
+	    user input.
         
-        Required Inputs:
-        ---------------    
+        Arguments:
             query (string):  a ADQL query
+            outpath (string): (optional) a full output filepath of the returned metadata 
+                table
+            cookiepath (string): (optional) a full cookie file path saved from login for 
+                querying the proprietary NEID data.
+            token (string): (optional) a token string save in memory from login for querying 
+                the proprietary NEID data; the token is only valid for the 
+                current session.
+            format (string): (optional) votable, ipac, csv, tsv  (default: ipac)
+	        maxrec (integer): (optional) maximum records to be returned 
+	            default: -1 or not specified will return all requested records
 
-        Optional inputs:
-	----------------
-        outpath (string): a full output filepath of the returned metadata 
-            table
-      
-        For searching proprietary NEID data, either the cookiepath or 
-        the token string saved from "login" is needed:  
-
-        cookiepath (string): a full cookie file path saved from login for 
-            querying the proprietary NEID data.
-        
-        token (string): a token string save in memory from login for querying 
-            the proprietary NEID data; the token is only valid for the 
-            current session.
-      
-        
-	format (string):  Output format: votable, ipac, csv, tsv (default: ipac)
-        
-	maxrec (integer):  maximum records to be returned 
-	     default: -1 or not specified will return all requested records
         """
    
         if (self.debug == 0):
@@ -1693,13 +1423,7 @@ class Archive:
         print (retstr)
         return
     
-    """} end Archive.query_adql
-    """
 
-
-    
-    """{ Archive.print_date
-    """
     def print_data (self):
 
 
@@ -1716,46 +1440,23 @@ class Archive:
         
         return
     
-    """} end Archive.print_date
-    """
-
-
-    
-    """{ Archive.download
-    """
     def download (self, metapath, datalevel, format, outdir, **kwargs):
         """
-        The download method allows users to download FITS files shown in 
-        the retrieved metadata file.  The column 'filepath' must be included
-        in the metadata file columns in order to download files.
-
-	Required input:
-	-----
-	metapath (string): a full path metadata table obtained from running
-	          query methods    
+            The download method allows users to download FITS files shown in 
+            the retrieved metadata file. The column 'filepath' must be included
+            in the metadata file columns in order to download files.
         
-        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
-        datetime (string): a datetime range string in the format of 
-	
-        format (string):   metasata table's format: ipac, votable, csv, or tsv.
-	
-        outdir (string):   the directory for depositing the returned files      
- 
-	
-        Optional input:
-        ----------------
-        cookiepath (string): cookie file path for downloading the proprietary 
-                             NEID data.
-        
-        token (string): token string obtained from login.
-        
-        start_row (integer),
-	
-        end_row (integer),
-
-        calibfile (integer): whether to download the associated calibration 
-            files (0/1);
-            default is 0.
+        Arguments:
+            metapath (string): a full path metadata table obtained from running query methods
+            datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng
+            datetime (string): a datetime range string, see `query_datetime`
+            format (string): metasata table's format: ipac, votable, csv, or tsv.
+            outdir (string): the directory for depositing the returned files      
+            cookiepath (string): (optional) cookie file path for downloading the proprietary NEID data.
+            token (string): (optional) token string obtained from login.
+            start_row (integer): (optional) starting row
+            end_row (integer): (optional) ending row
+            calibfile (bool): whether to download the associated calibration files (0/1); default is False.
         """
         
         if (self.debug == 0):
@@ -2117,129 +1818,17 @@ class Archive:
                 except Exception as e:
                     print (f'File [{filename:s}] download: {str(e):s}')
 
-
-            """{ comment:  if calibfile == 1: download calibfile code block 
-            for possible caliblist and files download in the future;
-            it is not implemented at this time.
-
-            if (calibfile == 1):
-
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug ('calibfile=1: downloading calibfiles')
-	    
-                filename_base = '' 
-                ind = -1
-                ind = filenameid.rfind ('.')
-                if (ind > 0):
-                    filename_base = filename[0:ind]
-                else:
-                    filename_base = filename
-
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug (f'filename_base= {filename_base:s}')
-	    
-                caliblist = self.outdir + '/' + filename_base + '.caliblist.json'
-                
-                if self.debug:
-                    logging.debug ('')
-                    logging.debug (f'caliblist= {caliblist:s}')
-
-                isExist = os.path.exists (caliblist)
-	    
-                if (not isExist):
-
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug ('downloading calibfiles')
-	    
-                    url = self.caliblist_url \
-                        + 'datalevel=' + datalevel \
-                        + '&filename=' + filename
-
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug (f'caliblist url= {url:s}')
-
-                try:
-                    self.__submit_request (url, caliblist, cookiejar)
-                    self.ncaliblist = self.ncaliblist + 1
-
-                    self.msg =  'Returned file written to: ' + caliblist   
-           
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug ('returned __submit_request')
-                        logging.debug (f'self.msg= {self.msg:s}')
-            
-                except Exception as e:
-                    print (f'File [{caliblist:s}] download: {str(e):s}')
-                
-
-            comment: check again after caliblist is successfully downloaded, 
-            if caliblist exists: download calibfiles
-                
-                isExist = os.path.exists (caliblist)
-                                  
-                if (isExist):
-
-                    if self.debug:
-                        logging.debug ('')
-                        logging.debug ('list exist: downloading calibfiles')
-	    
-                    try:
-                        ncalibs = self.__download_calibfiles ( \
-                            caliblist, cookiejar)
-                        self.ndnloaded_calib = self.ndnloaded_calib + ncalibs
-                
-                        if self.debug:
-                            logging.debug ('')
-                            logging.debug ('returned __download_calibfiles')
-                            logging.debug (f'{ncalibs:d} downloaded')
-
-                    except Exception as e:
-                
-                        self.msg = 'Error downloading files in caliblist [' + \
-                            filepath + ']: ' +  str(e)
-                        
-                        if self.debug:
-                            logging.debug ('')
-                            logging.debug (f'errmsg= {self.msg:s}')
-            
-            } comment: endif (download_calibfiles):
-            """
-
-        """}  endfor l in range (srow, erow+1)
-        """
-
         if self.debug:
             logging.debug ('')
             logging.debug (f'{self.len_tbl:d} files in the table;')
             logging.debug (f'{self.ndnloaded:d} files downloaded.')
             logging.debug (f'{self.ncaliblist:d} calibration list downloaded.')
 
-            """logging.debug (
-            f'{self.ndnloaded_calib:d} calibration files downloaded.')
-            """
 
         print (f'A total of new {self.ndnloaded:d} FITS files downloaded.')
  
-        """if (calibfile == 1):
-        print (f'{self.ncaliblist:d} new calibration list downloaded.')
-        print (
-        f'{self.ndnloaded_calib:d} new calibration FITS files downloaded.')
-        """
-
         return
-    
-    """} end Archive.download
-    """
-    
 
-    
-    """{ Archive.__submit_request
-    """
     def __submit_request(self, url, filepath, cookiejar):
 
         if self.debug:
@@ -2421,13 +2010,6 @@ class Archive:
 
         return
     
-    """} end Archive.__submit_request
-    """
-                       
-
-    
-    """{ Archive.__make_query
-    """
     def __make_query (self, url):
        
         if self.debug:
@@ -2511,26 +2093,15 @@ class Archive:
             
         return (query)
     
-    """}  end Archive.__make_query
+class objLookup(object):
     """
+        objLookup wraps ExoPlanet's web name resolver into a python class; 
+        the exoLookup checks the exoplanet archive database and if that fails 
+        it checks with the Sesame web service at CDS.  Sesame checks the CDS
+        database and if that fails it checks NED.  So this class covers
+        SIMBAD, NED, and ExoPlanet search.
 
-"""}  end class Archive
-"""
-
-
-
-"""{ objLookup class
-"""
-class objLookup:
-    """
-    objLookup wraps ExoPlanet's web name resolver into a python class; 
-    the exoLookup checks the exoplanet archive database and if that fails 
-    it checks with the Sesame web service at CDS.  Sesame checks the CDS
-    database and if that fails it checks NED.  So this class covers
-    SIMBAD, NED, and ExoPlanet search.
-
-    Required input:
-
+    Arguments:
         object (char):  object name to be resolved
     """
 
@@ -2760,54 +2331,31 @@ class objLookup:
 
         return
     
-    """} end objLookup.init
+class NeidTap(object):
     """
-"""} end objLookup class
-"""
+        NeidTap class provides client access to NEID's TAP service.
+        Public data doesn't not require user login, optional NEID login via 
+        NeidLogin class are used to search a user's proprietary data.
 
+    Arguments:
+        query (string): a SQL statement in specified query language
+	    request (string): (optional) default 'doQuery'
+	    lang (string): (optional) default 'ADQL'
+	    phase (string): (optional) default 'RUN'
+	    format (string): (optional) default 'votable'
+	    maxrec (int): (optional) default '2000'
+        cookiefile (string): a full path cookie file containing user info        
+        debug (bool): default False
 
-"""{ NeidTap class
-"""
-class NeidTap:
+    Examples:
+        >>> service = NeidTap(url, cookiefile=cookiepath)
+        # or
+        >>> service = NeidTap(url)
+        # or
+        >>> job = service.send_async (query, format='votable', request='doQuery', ...)
+        # or    
+        >>> job = service.send_sync (query, format='votable', request='doQuery', ...)
 
-    """
-    NeidTap class provides client access to NEID's TAP service.   
-
-    Public data doesn't not require user login, optional NEID login via 
-    NeidLogin class are used to search a user's proprietary data.
-
-    Calling Synopsis (example):
-
-    service = NeidTap (url, cookiefile=cookiepath), or
-    
-    service = NeidTap (url)
-
-
-    job = service.send_async (query, format='votable', request='doQuery', ...)
-
-    or
-    
-    job = service.send_sync (query, format='votable', request='doQuery', ...)
-
-    required parameter:
-    -------------------   
-        query -- a SQL statement in specified query language;
-
-    optional paramters:
-    ------------------    
-	request    -- default 'doQuery',
-	lang       -- default 'ADQL',
-	phase      -- default 'RUN',
-	format     -- default 'votable',
-	maxrec     -- default '2000'
-       
-        cookiefile -- a full path cookie file containing user info; 
-	              default is no cookiefile, or
-        
-        debug      -- default is no debug written
-    """
-
-    """{ NeidTap.init
     """
     def __init__ (self, url, **kwargs):
 
@@ -2934,12 +2482,6 @@ class NeidTap:
 
         return 
     
-    """} end NeidTap.init
-    """
-       
-
-    """{ NeidTap.send_async
-    """
     def send_async (self, query, **kwargs):
 
         debug = 0
@@ -3230,64 +2772,6 @@ class NeidTap:
 
             return (self.msg)
 
-        """outpath is not given: return resulturl
-        
-        if (len(self.outpath) == 0):
-           
-            self.resulturl = self.tapjob.resulturl
-            if debug:
-                logging.debug ('')
-                logging.debug (f'resulturl= {self.resulturl:s}')
-
-            return (self.resulturl)
-
-        try:
-            self.tapjob.get_result (self.outpath)
-
-            if debug:
-                logging.debug ('')
-                logging.debug (f'returned self.tapjob.get_result')
-        
-        except Exception as e:
-            
-            self.status = 'error'
-            self.msg = 'Error: ' + str(e)
-	    
-            if debug:
-                logging.debug ('')
-                logging.debug (f'exception: e= {str(e):s}')
-            
-            return (self.msg)    
-        
-        if debug:
-            logging.debug ('')
-            logging.debug ('got here: download result successful')
-      
-        self.status = 'ok'
-        self.msg = 'Result downloaded to file: [' + self.outpath + ']'
-	    
-        if debug:
-            logging.debug ('')
-            logging.debug (f'self.msg = {self.msg:s}')
-       
-        
-	self.msg = self.save_data (self.outpath)
-            
-	
-        if debug:
-            logging.debug ('')
-            logging.debug (f'returned save_data: msg= {self.msg:s}')
-
-
-        return (self.msg) 
-        """
-
-    """} end NeidTap.send_async
-    """
-
-
-    """{ NeidTap.send_async
-    """
     def send_sync (self, query, **kwargs):
 
        
@@ -3622,24 +3106,12 @@ class NeidTap:
        
         return (self.msg) 
     
-        """} end NeidTap.get_data
-        """
-
-"""} end NeidTap class
-"""
-
-
-"""{ TapJob class
-"""
 class TapJob:
-
     """
     TapJob class is used internally by TapClient class to store a Tap job's 
     parameters and returned job status and result urls.
     """
 
-    """{ TapJob.init
-    """
     def __init__ (self, statusurl, **kwargs):
         self.debug = 0 
         
@@ -3697,12 +3169,6 @@ class TapJob:
 
         return     
     
-    """} end TapJob.init
-    """ 
-    
-   
-    """{ TapJob.get_status
-    """
     def get_status (self):
         
         if self.debug:
@@ -3734,13 +3200,6 @@ class TapJob:
 
         return (self.statusstruct)
     
-    """} end TapJob.get_status
-    """
-
-
-
-    """{ TapJob.get_resulturl
-    """
     def get_resulturl (self):
         
         if self.debug:
@@ -3772,13 +3231,6 @@ class TapJob:
 
         return (self.resulturl)
     
-    """} end TapJob.get_resulturl
-    """
-
-
-
-    """{ TapJob.get_result
-    """
     def get_result (self, outpath):
         
         if self.debug:
@@ -3821,9 +3273,6 @@ class TapJob:
             self.msg = 'Failed to retrieve resulturl from status structure.'
             raise Exception (self.msg)    
 	    
-
-        """send resulturl to retrieve result table
-        """
         try:
             response = requests.get (self.resulturl, stream=True)
         
@@ -3871,10 +3320,6 @@ class TapJob:
             logging.debug ('done writing result to file')
             
         return        
-    
-    """} end TapJob.get_result
-    """
-
     
     def get_parameters (self):
 
@@ -4085,9 +3530,6 @@ class TapJob:
 
         return (self.destruction)
     
-   
-    """{ TapJob.get_errorsummary
-    """
     def get_errorsummary (self):
 
         if self.debug:
@@ -4147,12 +3589,6 @@ class TapJob:
 
             return (self.errorsummary)
     
-    """}  end TapJob.get_errorsummary
-    """
-   
-
-    """{ TapJob.get_statusjob
-    """
     def __get_statusjob (self):
 
         if self.debug:
@@ -4262,11 +3698,6 @@ class TapJob:
 
         return
     
-    """}  end TapJob.__get_statusjob
-    """
-    
-"""} end TapJob class
-"""
 
 Neid = Archive()
 print ('Neid instantiated')

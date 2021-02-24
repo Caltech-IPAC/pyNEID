@@ -1,7 +1,12 @@
 NEID Table Access Protocol (TAP) Client
 ======================================
 
+[![Documentation Status](https://readthedocs.org/projects/pyneid/badge/?version=latest)](https://pyneid.readthedocs.io/en/latest/?badge=latest)
+[![Coverage Status](https://coveralls.io/repos/github/Caltech-IPAC/pyNEID/badge.svg?branch=master)](https://coveralls.io/github/Caltech-IPAC/pyNEID?branch=master)
+
 **This repository is currently in alpha release. Features may be broken or missing. Please report any bugs to neid-help@ipac.caltech.edu**
+
+Documentation is available on [ReadTheDocs](https://pyneid.readthedocs.io/en/latest/)
 
 This package provides API access to the NEID Archive: neid.ipac.caltech.edu
 
@@ -15,9 +20,10 @@ With pyNEID you can:
 
 Contributions are welcome! If you wish to contribute code please create a fork and submit a pull request with a good description of the proposed changes.
 
+
 The NEID Table Access Protocol service is a general tool for making 
 SQL queries against NEID database tables (which reside in an Oracle
-DBMS).  TAP is a standard defined by the International Virtual 
+DBMS). TAP is a standard defined by the International Virtual 
 Astronomy Alliance (IVOA).
 
 There are multiple TAP client packages in existence (notably TAPPlus
