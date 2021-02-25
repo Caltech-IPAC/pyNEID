@@ -19,7 +19,7 @@ The package may be installed via pip:
 
 .. code-block:: bash
 		
-   $ pip install pyneid
+   $ pip install git+https://github.com/Caltech-IPAC/pyNEID.git
 
 Or by downloading directly from the `GitHub repository <https://github.com/Caltech-IPAC/pyNEID>`_.
 

@@ -11,7 +11,7 @@ Documentation is available on [ReadTheDocs](https://pyneid.readthedocs.io/en/lat
 
 This package provides API access to the NEID Archive: neid.ipac.caltech.edu
 
-The package can be installed from PiPy: `pip install pyneid`
+The package can be installed via pip: `pip install git+https://github.com/Caltech-IPAC/pyNEID.git`
 
 With pyNEID you can:
   - log in using your NEID Archive credentials, or use without login for access to public data only
