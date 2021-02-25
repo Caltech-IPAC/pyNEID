@@ -241,16 +241,18 @@ def test_query_criteria_cookie():
     astropytbl = Table.read ('./criteria.eng.tbl', format='ascii.ipac')
     print ('criteria.eng.tbl read successfully by astropy')
 
-def test_downloafd():
-    #
-    #    download FITS: first time when dnload_dir is empty or created the 
-    #    following script downloaded 3 FITS files, 3 calibration list, and
-    #    30 more FITS files from the calibration list.
-    #
-    Neid.download('./criteria.sci.tbl', 
-        'l0', \
-        'ipac', \
-        '.', \
-        cookiepath='./neidadmincookie.txt', \
-        start_row=0, \
-        end_row=1)
+# disabled for now since public users have no data to download yet
+
+# def test_downloafd():
+#     #
+#     #    download FITS: first time when dnload_dir is empty or created the 
+#     #    following script downloaded 3 FITS files, 3 calibration list, and
+#     #    30 more FITS files from the calibration list.
+#     #
+#     Neid.download('./criteria.sci.tbl', 
+#         'l0', \
+#         'ipac', \
+#         '.', \
+#         cookiepath='./neidadmincookie.txt', \
+#         start_row=0, \
+#         end_row=1)
