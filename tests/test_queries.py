@@ -8,6 +8,7 @@ from astropy.table import Table,Column
 # at the top level of the repo.
 
 def test_login():
+    # dummy user with limited access
     Neid.login (userid='pyneidprop', \
         password='pielemonquietyellow', \
         cookiepath='./neidadmincookie.txt', 
