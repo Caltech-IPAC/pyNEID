@@ -19,7 +19,7 @@ WORKDIR /code/pyneid
 ADD . /code/pyneid
 
 # Install the package
-RUN pip3 install -r requirements.txt && \
+RUN pip3 install -r /code/pyneid/requirements.txt && \
     pip3 install --no-cache-dir --no-deps .
 
 CMD pytest --cov=pyneid --cov=modules && \
