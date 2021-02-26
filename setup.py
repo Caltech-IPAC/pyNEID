@@ -2,7 +2,9 @@ from setuptools import setup, find_packages
 
 extensions = []
 
-reqs = ['astropy', 'requests', 'xmltodict']
+reqs = []
+for line in open('requirements.txt', 'r').readlines():
+    reqs.append(line)
 
 with open ("README.md", "r") as fh:
     long_description = fh.read()
