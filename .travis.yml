@@ -13,6 +13,7 @@ deploy:
   provider: pypi
   user: __token__
   password:
-    secure: AgEIcHlwaS5vcmcCJGU5OGZhNGMwLWU4ZDMtNDQzZC04NmI4LWQ3OWU5ZTlmMTA5MgACN3sicGVybWlzc2lvbnMiOiB7InByb2plY3RzIjogWyJweW5laWQiXX0sICJ2ZXJzaW9uIjogMX0AAAYgztEhUSDPIZ-TYbyvg1fDZXdwLJ4Fu2feG0eyTWdMoYE
+    secure:pypi-AgEIcHlwaS5vcmcCJGU5OGZhNGMwLWU4ZDMtNDQzZC04NmI4LWQ3OWU5ZTlmMTA5MgACN3sicGVybWlzc2lvbnMiOiB7InByb2plY3RzIjogWyJweW5laWQiXX0sICJ2ZXJzaW9uIjogMX0AAAYgztEhUSDPIZ-TYbyvg1fDZXdwLJ4Fu2feG0eyTWdMoYE
   on:
     tags: 
+
