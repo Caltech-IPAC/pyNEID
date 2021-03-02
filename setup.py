@@ -8,7 +8,6 @@ for line in open('requirements.txt', 'r').readlines():
 
 with open ("README.md", "r") as fh:
     long_description = fh.read()
-long_description_content_type = "text/markdown"
     
 setup(
     name="pyneid",
@@ -16,6 +15,7 @@ setup(
     author="Mihseh Kong",
     description="NEID archive access client", 
     long_description = long_description,
+    long_description_content_type = "text/markdown",
     url="https://github.com/Caltech-IPAC/pyNEID",
     classifiers=[
         'Intended Audience :: Science/Research',
