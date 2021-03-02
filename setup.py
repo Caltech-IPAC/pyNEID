@@ -8,7 +8,8 @@ for line in open('requirements.txt', 'r').readlines():
 
 with open ("README.md", "r") as fh:
     long_description = fh.read()
-
+long_description_content_type = "text/markdown"
+    
 setup(
     name="pyneid",
     version="0.1.0",
