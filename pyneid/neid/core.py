@@ -1606,14 +1606,37 @@ class Archive:
             logging.debug ('')
             logging.debug (f'self.len_col= {self.len_col:d}')
 
-        filenamecol = datalevel + 'filename'
-        filepathcol = datalevel + 'filepath'
+        #filenamecol = datalevel + 'filename'
+        #filepathcol = datalevel + 'filepath'
+
+        filenamecol = ''
+        filepathcol = ''
+
+        if ((datalevel == 'l0') or \
+           (datalevel == 'eng') or \
+           (datalevel == 'solarl0') or \
+           (datalevel == 'solareng')):
+           filenamecol = 'l0filename'
+           filepathcol = 'l0filepath'
+
+        elif ((datalevel == 'l1') or \
+            (datalevel == 'eng') or \
+            (datalevel == 'solarl1') or \
+            (datalevel == 'solareng')):
+            filenamecol = 'l1filename'
+            filepathcol = 'l1filepath'
+
+        elif ((datalevel == 'l2') or \
+            (datalevel == 'eng') or \
+            (datalevel == 'solarl2') or \
+            (datalevel == 'solareng')):
+            filenamecol = 'l2filename'
+            filepathcol = 'l2filepath'
 
         if self.debug:
             logging.debug ('')
             logging.debug (f'filenamecol= {filenamecol:s}')
             logging.debug (f'filepathcol= {filepathcol:s}')
-
 
         ind_filenamecol = -1
         ind_filepathcol = -1
