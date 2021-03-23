@@ -11,7 +11,7 @@ with open ("README.md", "r") as fh:
     
 setup(
     name="pyneid",
-    version="1.0.3",
+    version="1.0.4",
     author="Mihseh Kong",
     description="NEID archive access client", 
     long_description = long_description,
