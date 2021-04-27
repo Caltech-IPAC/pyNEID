@@ -4,6 +4,8 @@ NEID Table Access Protocol (TAP) Client
 [![Build Status](https://www.travis-ci.com/Caltech-IPAC/pyNEID.svg?branch=master)](https://www.travis-ci.com/Caltech-IPAC/pyNEID)
 [![Documentation Status](https://readthedocs.org/projects/pyneid/badge/?version=latest)](https://pyneid.readthedocs.io/en/latest/?badge=latest)
 [![Coverage Status](https://coveralls.io/repos/github/Caltech-IPAC/pyNEID/badge.svg?branch=master)](https://coveralls.io/github/Caltech-IPAC/pyNEID?branch=master)
+[![PyPI version](https://badge.fury.io/py/pyneid.svg)](https://badge.fury.io/py/pyneid)
+[![PyPI downloads](https://img.shields.io/pypi/dm/pyneid.svg)](https://pypistats.org/packages/pyneid)
 
 **This repository is currently in alpha release. Features may be broken or missing. Please report any bugs to neid-help@ipac.caltech.edu**
 
@@ -11,7 +13,7 @@ Documentation is available on [ReadTheDocs](https://pyneid.readthedocs.io/en/lat
 
 This package provides API access to the NEID Archive: neid.ipac.caltech.edu
 
-The package can be installed via pip: `pip install git+https://github.com/Caltech-IPAC/pyNEID.git`
+The package can be installed via pip: `pip install pyneid`
 
 With pyNEID you can:
   - log in using your NEID Archive credentials, or use without login for access to public data only
