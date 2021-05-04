@@ -1750,7 +1750,12 @@ class Archive:
         """urls for nph-neidDownload.py
         """
 
-        self.getneid_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidDownload.py?'
+        #self.getneid_url = self.baseurl + 'cgi-bin/NeidAPI/nph-neidDownload.py?'
+        getfile_baseurl = 'https://neid.ipac.caltech.edu/'
+
+        self.getneid_url = getfile_baseurl + 'get_file.php?'
+        #self.getneid_url = getfile_baseurl + 'get_file_pyNEID.php?'
+
 
         if self.debug:
             logging.debug ('')
@@ -1806,8 +1811,21 @@ class Archive:
             """get data files
             """
 
-            url = self.getneid_url + 'datalevel=' + datalevel + \
-                '&filepath=' + '/' + filepath + '&debug=1'
+            #url = self.getneid_url + 'datalevel=' + datalevel + \
+            #    '&filepath=' + '/' + filepath + '&debug=1'
+            
+            url = self.getneid_url + 'filehand=' + filepath
+           
+            if ((datalevel == 'eng') or (datalevel == 'solareng')):
+                url = url + '&eng'
+
+            if ((datalevel == 'solarl0') or \
+                (datalevel == 'solarl1') or \
+                (datalevel == 'solarl2') or \
+                (datalevel == 'solareng')):
+                url = url + '&solar'
+
+            url = url + '&json'
             
             filepath = self.outdir + '/' + filename 
                 
@@ -3723,4 +3741,3 @@ class TapJob:
     
 
 Neid = Archive()
-print ('Neid instantiated')

@@ -1,5 +1,10 @@
+import os
 import sys
 import io
+import filecmp
+import pytest 
+from pathlib import Path
+
 from pyneid.neid import Neid 
 from astropy.table import Table,Column
 
@@ -7,253 +12,335 @@ from astropy.table import Table,Column
 # Docker container built with the Dockerfile
 # at the top level of the repo.
 
-def test_login():
-    # dummy user with limited access
-    Neid.login (userid='pyneidprop', \
-        password='pielemonquietyellow', \
-        cookiepath='./neidadmincookie.txt', 
-        debugfile='./archive.debug')
+# dummy user pyneidprop with limited access
 
-def test_l0_qeury():
-    #   by_adql: neidl0 returned 11071 records
-    #
-    query = "select * from neidl0"
-    Neid.query_adql (query, \
-        cookiepath='./neidadmincookie.txt', \
+userdict = {
+   "pyneidprop_pielemonquietyellow":"Successfully login as pyneidprop",
+   "xxpyneidprop_pielemonquietyellow":"Failed to login: invalid userid = xxpyneidprop",
+   "pyneidprop_xxpielemonquietyellow":"Failed to login: invalid password"
+}
+
+#
+#    test login method: correctly, wrong userid, and wrong password
+#
+@pytest.mark.parametrize ("user, expected", list(userdict.items()), \
+    ids=list(userdict.keys()))  
+ 
+def test_login (user, expected, capsys):
+   
+    ind = user.index('_')
+    userid = user[0:ind]
+    password = user[ind+1:]
+
+    Neid.login (cookiepath='./neidtestcookie.txt', \
+        userid=userid, \
+        password=password)
+
+    out, err = capsys.readouterr()
+    assert out.startswith (expected)
+
+
+#
+#    test query_datetime method for all datalevel; 
+#    but currently only l0 and l1 contains data for the test user.
+#
+#    returned metadata files are compared with the truth data for validation.
+#
+datetimedict = {
+    "l0":"2021-01-16 06:10:55/2021-01-16 23:59:59", \
+    "l1":"2021-01-16 06:10:55/2021-01-16 23:59:59"
+}
+
+@pytest.mark.parametrize ("datalevel,datetime", list(datetimedict.items()), \
+    ids=list(datetimedict.keys()))
+ 
+def test_query_datetime (datalevel, datetime, capsys):
+
+    outpath = './datetime.' + datalevel + '.tbl'
+    datapath = './truth_data/datetime.' + datalevel + '.tbl'
+
+    Neid.query_datetime (datalevel, \
+        datetime, \
+        cookiepath='./neidtestcookie.txt', \
         format='ipac', \
-        outpath='./adql.l0.tbl')
+        outpath=outpath)
 
-def test_l1_query():
-    #
-    #   by_adql: neidl1 returned 10662 records
-    #
-    query = "select * from neidl1"
-    Neid.query_adql (query, \
-        cookiepath='./neidadmincookie.txt', \
+    assert os.path.exists(outpath), \
+        f'Result not downloaded to file [{outpath:s}]'
+    
+    if (datalevel == 'l0'):
+        assert (filecmp.cmp (outpath, datapath, shallow=False))
+
+    elif (datalevel == 'l1'):
+        astropytbl = None
+        astropytbl = Table.read (outpath, format='ascii.ipac')
+        assert (astropytbl is not None), \
+            "f{outpath:s} cannot be read by astropy"
+
+        astropytbl_truth = None
+        astropytbl_truth = Table.read (datapath, format='ascii.ipac')
+        assert (astropytbl_truth  is not None), \
+            "f{datapath:s} cannot be read by astropy"
+
+        assert (len(astropytbl) == len(astropytbl_truth)), \
+            f"Number of records in {outpath:s} is incorrect"
+
+#
+#    test query_position method for all datalevel; 
+#    but currently only l0 and l1 contains data for the test user.
+#
+#    returned metadata files are compared with the truth data for validation.
+#
+posdict = {
+    "l0": "circle 23.634 68.95 1.0", \
+    "l1": "circle 23.634 68.95 1.0"
+}
+
+@pytest.mark.parametrize ("datalevel,pos", list(posdict.items()), \
+    ids=list(posdict.keys()))
+ 
+def test_query_position (datalevel, pos, capsys):
+
+    outpath = './pos.' + datalevel + '.tbl'
+    datapath = './truth_data/pos.' + datalevel + '.tbl'
+
+    Neid.query_position (datalevel, \
+        pos, \
+        cookiepath='./neidtestcookie.txt', \
+        format='ipac',
+        outpath=outpath)
+
+    assert os.path.exists(outpath), \
+        f'Result not downloaded to file [{outpath:s}]'
+    #assert (filecmp.cmp (outpath, datapath, shallow=False))
+
+    astropytbl = None
+    astropytbl = Table.read (outpath, format='ascii.ipac')
+    assert (astropytbl is not None), \
+        "f{outpath:s} cannot be read by astropy"
+
+    astropytbl_truth = None
+    astropytbl_truth = Table.read (datapath, format='ascii.ipac')
+    assert (astropytbl_truth  is not None), \
+        "f{datapath:s} cannot be read by astropy"
+
+    assert (len(astropytbl) >= len(astropytbl_truth)), \
+        f"Number of records in {outpath:s} is incorrect"
+
+
+#
+#    test query_object method using l1 data
+#
+def test_query_object():
+
+    outpath = './object.l1.tbl'
+    datapath = './truth_data/object.l1.tbl'
+
+    Neid.query_object ('l1', \
+        'HD 9407', \
+        cookiepath='./neidtestcookie.txt', \
         format='ipac', \
-        outpath='./adql.l1.tbl')
+        outpath=outpath)
 
-def test_l2_query():
-    #
-    #   by_adql: neidl2 returned 461 records
-    #
-    query = "select * from neidl2"
-    Neid.query_adql (query, \
-        cookiepath='./neidadmincookie.txt', \
-        format='ipac', \
-        outpath='./adql.l2.tbl')
+    assert os.path.exists(outpath), \
+        f'Result not downloaded to file [{outpath:s}]'
+    #assert (filecmp.cmp (outpath, datapath, shallow=False))
 
-def test_query_eng():
-    #
-    #   by_adql: neideng returned 3321 records
-    #
-    query = "select * from neideng"
-    Neid.query_adql (query, \
-        cookiepath='./neidadmincookie.txt', \
-        format='ipac', \
-        outpath='./adql.eng.tbl')
+    astropytbl = None
+    astropytbl = Table.read (outpath, format='ascii.ipac')
+    assert (astropytbl is not None), \
+        "f{outpath:s} cannot be read by astropy"
 
-def test_query_solar0():
-    #
-    #   by_adql: neidsolarl0 returned 8421 records
-    #
-    query = "select * from neidsolarl0"
-    Neid.query_adql (query, \
-        cookiepath='./neidadmincookie.txt', \
-        format='ipac', \
-        outpath='./adql.solarl0.tbl')
+    astropytbl_truth = None
+    astropytbl_truth = Table.read (datapath, format='ascii.ipac')
+    assert (astropytbl_truth  is not None), \
+        "f{datapath:s} cannot be read by astropy"
 
-def test_query_solar1():
-    #
-    #   by_adql: neidsolarl1 returned 4027 records
-    #
-    query = "select * from neidsolarl1"
-    Neid.query_adql (query, \
-        cookiepath='./neidadmincookie.txt', \
-        format='ipac', \
-        outpath='./adql.solarl1.tbl')
+    assert (len(astropytbl) >= len(astropytbl_truth)), \
+        f"Number of records in {outpath:s} is incorrect"
 
 
-def test_query_solar2():
-    #
-    #   by_adql: neidsolarl2 returned 3759 records
-    #
-    query = "select * from neidsolarl2"
-    Neid.query_adql (query, \
-        cookiepath='./neidadmincookie.txt', \
-        format='ipac', \
-        outpath='./adql.solarl2.tbl')
+#
+#    test query_qobject method using l1 data
+#
+def test_query_qobject():
 
-def test_query_solareng():
-    #
-    #   by_adql: neidsolareng returned 6 records
-    #
-    query = "select * from neidsolareng"
-    Neid.query_adql (query, \
-        cookiepath='./neidadmincookie.txt', \
-        format='ipac', \
-        outpath='./adql.solareng.tbl')
+    outpath = './qobject.l1.tbl'
+    datapath = './truth_data/qobject.l1.tbl'
 
-def test_query_datetime_l0():
-    #
-    #    search by datetime l0: returned 94 recs
-    #
-    Neid.query_datetime ('l0', \
-        '2021-01-22 00:00:00/2021-01-22 23:59:59', \
-        cookiepath='./neidadmincookie.txt', \
-        format='ipac', \
-        outpath='./datetime.ops.1.tbl')
-
-def test_query_datetime_l2():
-    #
-    #    search by datetime l2: returned 21 recs
-    #
-    Neid.query_datetime ('l2', \
-        '2021-01-01 0:00:00/2021-01-31 23:59:59', \
-        cookiepath='./neidadmincookie.txt', \
-        format='ipac', \
-        outpath='./datetime.l2.tbl')
-
-def test_query_datetime_solar0():
-    #
-    #    search by datetime solarl0: returned 19 recs
-    #
-    Neid.query_datetime ('solarl0', \
-        '2021-01-01 00:00:00/2021-01-20 23:59:59', \
-        cookiepath='./neidadmincookie.txt', \
-        format='ipac', \
-        outpath='./datetime.solarl0.tbl')
-
-def test_pos_cookie():
-    #
-    #    search by pos (with cookie): 56 records returned 
-    #
-    Neid.query_position ('l0', \
-        'circle 26.0214 -15.9395 1.0', \
-        cookiepath='./neidadmincookie.txt', \
-        format='ipac', \
-        outpath='./pos.l0.tbl')
-        
-    astropytbl = Table.read ('./pos.l0.tbl', format='ascii.ipac')
-    print ('pos.l0.tbl read successfully by astropy')
-
-def test_query_obj_cookie():
-    #
-    #    search by object (with cookie): 56 records returned 
-    #
-    Neid.query_object ('l0', \
-        'HD 10700', \
-        cookiepath='./neidadmincookie.txt', \
-        format='ipac', \
-        outpath='./object.l0.tbl')
-
-    astropytbl = Table.read ('./object.l0.tbl', format='ascii.ipac')
-    print ('object.l0.tbl read successfully by astropy')
-
-def test_query_qobj_cookie():
-    #
-    #    search by qobject (with cookie): 56 records returned 
-    #
-    Neid.query_qobject ('l0', \
+    Neid.query_qobject ('l1', \
         'Gaia DR2', \
-        cookiepath='./neidadmincookie.txt', \
+        cookiepath='./neidtestcookie.txt', \
         format='ipac', \
-        outpath='./qobject.l0.tbl')
+        outpath=outpath)
 
-    astropytbl = Table.read ('./qobject.l0.tbl', format='ascii.ipac')
-    print ('qobject.l0.tbl read successfully by astropy')
+    assert os.path.exists(outpath), \
+        f'Result not downloaded to file [{outpath:s}]'
+    #assert (filecmp.cmp (outpath, datapath, shallow=False))
 
-def test_query_piname_cookie():
-    #
-    #    search by piname (with cookie): 93 records returned 
-    #
-    Neid.query_piname ('l0', \
-        'Mahadevan', \
-        cookiepath='./neidadmincookie.txt', \
+    astropytbl = None
+    astropytbl = Table.read (outpath, format='ascii.ipac')
+    assert (astropytbl is not None), \
+        "f{outpath:s} cannot be read by astropy"
+
+    astropytbl_truth = None
+    astropytbl_truth = Table.read (datapath, format='ascii.ipac')
+    assert (astropytbl_truth  is not None), \
+        "f{datapath:s} cannot be read by astropy"
+
+    assert (len(astropytbl) >= len(astropytbl_truth)), \
+        f"Number of records in {outpath:s} is incorrect"
+
+#
+#    test query_program method using l1 data
+#
+def test_query_program():
+
+    outpath = './program.l1.tbl'
+    datapath = './truth_data/program.l1.tbl'
+
+    Neid.query_program ('l1', \
+        '2021A-2014', \
+        cookiepath='./neidtestcookie.txt', \
         format='ipac', \
-        outpath='./piname.l0.tbl')
+        outpath=outpath)
 
-    astropytbl = Table.read ('./piname.l0.tbl', format='ascii.ipac')
-    print ('piname.l0.tbl read successfully by astropy')
+    assert os.path.exists(outpath), \
+        f'Result not downloaded to file [{outpath:s}]'
+    #assert (filecmp.cmp (outpath, datapath, shallow=False))
 
-def test_query_program_cookie():
-    #
-    #    search by program (with cookie): 93 records returned 
-    #
-    Neid.query_program ('l0', \
-        '2021B-6666', \
-        cookiepath='./neidadmincookie.txt', \
-        format='ipac', \
-        outpath='./program.l0.tbl')
+    astropytbl = None
+    astropytbl = Table.read (outpath, format='ascii.ipac')
+    assert (astropytbl is not None), \
+        "f{outpath:s} cannot be read by astropy"
 
-    astropytbl = Table.read ('./program.l0.tbl', format='ascii.ipac')
-    print ('program.l0.tbl read successfully by astropy')
+    astropytbl_truth = None
+    astropytbl_truth = Table.read (datapath, format='ascii.ipac')
+    assert (astropytbl_truth  is not None), \
+        "f{datapath:s} cannot be read by astropy"
 
-def test_query_criteria_cookie():
-    #
-    #    following three examples search_criteria on the same location (with cookie)
-    #
-    #    1. input: object name, Sci data, datetime: 56 records returned 
-    #
+    assert (len(astropytbl) >= len(astropytbl_truth)), \
+        f"Number of records in {outpath:s} is incorrect"
+
+
+#
+#    test query_criteria method using l1 data
+#
+def test_query_criteria():
+
+    outpath = './criteria.l1.tbl'
+    datapath = './truth_data/criteria.l1.tbl'
+
     param = dict()
-    param['datalevel'] = 'l0'
-    param['datetime'] = '2021-01-14 00:00:00/2021-01-14 23:59:59'
-    param['object'] = 'HD 95735'
+    param['datalevel'] = 'l1'
+    param['datetime'] = '2021-01-01 00:00:00/2021-04-19 23:59:59'
+    param['object'] = 'HD 9407'
 
     Neid.query_criteria (param, \
-        cookiepath='./neidadmincookie.txt', \
+        cookiepath='./neidtestcookie.txt', \
         format='ipac', \
-        outpath='./criteria.sci.tbl')
+        outpath=outpath)
 
-    astropytbl = Table.read ('./criteria.sci.tbl', format='ascii.ipac')
-    print ('criteria.sci.tbl read successfully by astropy')
+    assert os.path.exists(outpath), \
+        f'Result not downloaded to file [{outpath:s}]'
+    assert (filecmp.cmp (outpath, datapath, shallow=False))
 
-    #
-    #    2. input: qobject name, Cal data, datetime: 6 records returned 
-    #
-    param = dict()
-    param['datalevel'] = 'l0'
-    param['datetime'] = '2021-01-14 12:00:00/2021-01-14 23:59:59'
-    param['qobject'] = 'Gaia DR2'
-    param['obstype'] = 'sci'
 
-    Neid.query_criteria (param, \
-        cookiepath='./neidadmincookie.txt', \
+#
+#    test query_adql method using l1 data
+#
+def test_qeury_adql():
+
+    outpath = './adql.l1.tbl'
+    datapath = './truth_data/adql.l1.tbl'
+
+    query = "select l1filename, l1filepath, l1propint, qobject, object, qra, qdec, to_char(obsdate,'YYYY-MM-DD HH24:MI:SS.FF3') as date_obs, exptime, obsmode, obstype, program, piname, datalvl, seeing, airmass, moonagl, qrad as ra, qdecd as dec from neidl1 where ((obsdate >= to_date('2020-01-01 06:10:55', 'yyyy-mm-dd HH24:MI:SS') and obsdate <= to_date('2021-04-19 23:59:59', 'yyyy-mm-dd HH24:MI:SS')) and (qdecd >= -90.)) order by obsdate"
+
+    Neid.query_adql (query, \
+        cookiepath='./neidtestcookie.txt', \
         format='ipac', \
-        outpath='./criteria.sci.2.tbl')
+        outpath=outpath)
 
-    astropytbl = Table.read ('./criteria.sci.2.tbl', format='ascii.ipac')
-    print ('criteria.sci.2.tbl read successfully by astropy')
+    assert os.path.exists(outpath), \
+        f'Result not downloaded to file [{outpath:s}]'
+    #assert (filecmp.cmp (outpath, datapath, shallow=False))
 
-    #
-    #    3. input: qobject name, Eng data, datetime: 12 records returned 
-    #
-    param = dict()
-    param['datalevel'] = 'l0'
-    param['datetime'] = '2021-01-14 12:00:00/2021-01-14 23:59:59'
-    param['qobject'] = 'Gaia DR2'
-    param['obstype'] = 'cal'
+    astropytbl = None
+    astropytbl = Table.read (outpath, format='ascii.ipac')
+    assert (astropytbl is not None), \
+        "f{outpath:s} cannot be read by astropy"
 
-    Neid.query_criteria (param, \
-        cookiepath='./neidadmincookie.txt', \
-        format='ipac', \
-        outpath='./criteria.eng.tbl')
+    astropytbl_truth = None
+    astropytbl_truth = Table.read (datapath, format='ascii.ipac')
+    assert (astropytbl_truth  is not None), \
+        "f{datapath:s} cannot be read by astropy"
 
-    astropytbl = Table.read ('./criteria.eng.tbl', format='ascii.ipac')
-    print ('criteria.eng.tbl read successfully by astropy')
+    assert (len(astropytbl) >= len(astropytbl_truth)), \
+        f"Number of records in {outpath:s} is incorrect"
 
-# disabled for now since public users have no data to download yet
+#
+#    test query_adql method: 
+#    download the first two files from metadata file criteria.l1.tbl
+#
+dnloaddict = {
+    "l0":"./datetime.l0.tbl", \
+    "l1":"./criteria.l1.tbl"
+}
 
-# def test_downloafd():
-#     #
-#     #    download FITS: first time when dnload_dir is empty or created the 
-#     #    following script downloaded 3 FITS files, 3 calibration list, and
-#     #    30 more FITS files from the calibration list.
-#     #
-#     Neid.download('./criteria.sci.tbl', 
-#         'l0', \
-#         'ipac', \
-#         '.', \
-#         cookiepath='./neidadmincookie.txt', \
-#         start_row=0, \
-#         end_row=1)
+@pytest.mark.parametrize ("datalevel,metatbl", list(dnloaddict.items()), \
+    ids=list(dnloaddict.keys()))
+
+def test_download(datalevel, metatbl, capsys):
+#
+#    Check if metadata file contains datalevel + 'filepath' column
+#
+    astropytbl = Table.read (metatbl, format='ascii.ipac')
+    len_col = len(astropytbl.colnames)
+
+    ind_filepathcol = -1
+    for i in range (0, len_col):
+   
+        colname = datalevel + 'filepath'
+        if (astropytbl.colnames[i].lower() == colname):
+            ind_filepathcol = i
+
+    assert (ind_filepathcol >= 0), \
+        "filepath column doesn't exit in metadata table"
+
+#
+#    Make sure ./dnload_dir is empty
+#
+    dnloaddir = './dnload_dir'
+    srow = 0
+    erow = 1
+
+    if (os.path.exists (dnloaddir)):
+        
+        files = os.listdir(dnloaddir)
+        
+        for f in files: 
+            os.remove(dnloaddir + '/'+f)
+
+    Neid.download(metatbl, \
+        datalevel, \
+        'ipac', \
+        dnloaddir, \
+        cookiepath='./neidtestcookie.txt', \
+        start_row=srow, \
+        end_row=erow)
+   
+    for i in range (srow, erow):
+
+        filepath = astropytbl[i][ind_filepathcol]
+        ind = filepath.rindex ('/')
+        filename = filepath[ind+1:]
+        
+        print (f'filename= {filename:s}') 
+        print (f'filepath= {filepath:s}') 
+    
+        dnloaded = dnloaddir + '/' + filename 
+        assert (os.path.exists (dnloaded))
+        
+        filesize = Path (dnloaded).stat().st_size
+        assert (filesize > 100000)
+
