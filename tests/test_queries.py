@@ -201,7 +201,7 @@ def test_query_program():
 
     Neid.query_program ('l1', \
         '2021A-2014', \
-        cookiepath='./neidadmincookie.txt', \
+        cookiepath='./neidtestcookie.txt', \
         format='ipac', \
         outpath=outpath)
 
