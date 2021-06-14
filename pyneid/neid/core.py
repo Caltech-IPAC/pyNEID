@@ -21,25 +21,26 @@ from . import conf
 
 class Archive:
     """ 
-        'Archive' class provides NEID archive access functions for searching 
-        NEID data via TAP interface.  
+    'Archive' class provides NEID archive access functions for searching 
+    NEID data via TAP interface.  
     
-        The user's NEID credentials (given at login as a cookie file or a token 
-        string) are used to search the proprietary data.
+    The user's NEID credential given at login as a cookie file is used to 
+    search the proprietary data.  In addition in the same python session
+    as 'login', a token string will be saved in memory for searching
+    the proprietary data without entering the cookie file.
 
-        Arguments:
-            debugfile: a file path for the debug output
+    In the following examples, "Neid" will represent an instance of the 
+    Archive class:
 
-        In the following examples, "neid" will represent an instance of the 
-        Archive class:
+    Examples:
+        >>> import os
+        >>> import sys
 
-        Examples:
-            >>> import os
-            >>> import sys
-
-            >>> from pyneid.neid import Neid
-
-            >>> neid = Archive()
+        >>> from pyneid.neid import Neid
+        
+        >>> Neid.query_datetime ('l0', 
+        >>>                      '2020-01-01 00:00:00/2020-12-31 23:59:59', 
+        >>>                      outpath='./meta.xml')
     """
 
     tap = None
@@ -118,33 +119,38 @@ class Archive:
     
     def login (self, **kwargs):
         """
-        login method validates a user has a valid NEID account; 
-        it takes two 'keyword' arguments: userid and password. If the inputs 
-        are not provided in the keyword, the auth method prompts for inputs.
+        login method validates a user has a valid NEID account; it takes two 
+        'keyword' arguments: userid and password. If the inputs are not 
+        provided in the keyword, the auth method prompts for inputs.
+
+        Required Keyword Arguments:
+        
+	    >>> userid     (string): a valid user id assigned by NEID;
+            >>> password   (string): a valid password in the NEID's user table; 
+
+        Optional Keyword Arguments:
+        
+            >>> cookiepath (string): a file path provided by the user to save 
+            >>>     returned cookie (in login method) or to serve as input 
+            >>>     argument for the subsequent Neid query and download methods.
+        
+        Calling synopsis: 
+    
+            >>> Neid.login (userid='xxxx', 
+            >>>             password='xxxxxx', 
+            >>>             cookiepath='mycookie'), or
+
+            >>> Neid.login (cookiepath='mycookie'): and the program will 
+            >>>     prompt for userid and password 
+
 
         login method returns both cookie header and a token string in 
-        the returned message file.  
+        the returned message jason structure.  
         
         If cookiepath is provided, the cookie will be saved to the cookiepath.
         
         The token string will be saved in the variable "token" in memory to 
-        be used for other Archive methods in the current session.
-
-        Arguments:
-	        userid (string): a valid user id  in the NEID's user table.
-            password (string): a valid password in the NEID's user table.   
-            cookiepath (string): (optional) a file path provided by the user to
-                    save returned cookie in a local file for use anytime in the future data search. 
-        
-        Examples:    
-            # without prompt
-            >>> neid.login(userid='xxxx', password='xxxxxx', cookiepath=cookiepath)
-            # or
-            >>> neid.login(userid='xxxx', password='xxxxxx', token=token_string)
-            # or
-            # prompt for userid and password
-            >>> neid.login(cookiepath=cookiepath) 
-            >>> neid.login()
+        be used for other Neid methods in the same python session.
         """
 
         if (self.debug == 0):
@@ -351,43 +357,52 @@ class Archive:
     def query_datetime (self, datalevel, datetime, **kwargs):
         
         """'query_datetime' method search NEID data by 'datetime' range
+
+        Required Arguments:
+            
+        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
+        datetime (string): a datetime string in the format of 
+            datetime1/datetime2 where '/' separates the two datetime values of 
+            format 'yyyy-mm-dd hh:mm:ss'
+           
+            the following inputs are acceptable:
+
+            datetime1/: will search data with datetime later than (>=) 
+                        datetime1
+            
+            /datetime2: will search data with datetime earlier than (<=)
+                        datetime2
+
+            datetime1: will search data with datetime equal to (=) datetime1,
+                (this is not recommended)
+
+        Optional Keyword Arguments:
+    
+        outpath (string): a full output filepath of the returned metadata table;            without this input the returned data will be saved in the astropy 
+            table in the memory.
         
-            Arguments:
-                datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
-                datetime (string): a datetime string in the format of 
-                    datetime1/datetime2 where '/' separates the two datetime values` 
-                    of format 'yyyy-mm-dd hh:mm:ss'
-                outpath (string): (optional) a full output filepath of the returned metadata 
-                    table
-                cookiepath (string): (optional) a full cookie file path saved from login for 
-                    querying the proprietary NEID data.
-                token (string): (optional) a token string save in memory from login for querying 
-                    the proprietary NEID data; the token is only valid for the 
-                    current session.
-                format (string): (optional) Output format: votable, ipac, csv, tsv 
-                            (default: votable)
-                maxrec (integer): (optional) maximum records to be returned 
-                    default: -1 or not specified will return all requested records
+        cookiepath (string): (optional) a full cookie file path saved from 
+            login for querying the proprietary NEID data.
+        
+        format (string): (optional) Output format: votable, ipac, csv, tsv 
+            (default: votable)
+        
+        maxrec (integer): (optional) maximum records to be returned 
+            default: -1 or not specified will return all requested records
 
-            Note:
-                The following inputs are acceptable for the datetime parameter:
-
-                'datetime1/': will search data with datetime later than (>=) datetime1
-
-                '/datetime2': will search data with datetime earlier than (<=) datetime2
-
-                'datetime1': will search data with datetime equal to (=) datetime1 (this is not recommended)
-
-            Examples:
-                >>> datalevel = 'l0',
-                >>> datetime = '2020-11-16 06:10:55/2020-11-18 00:00:00' 
-
-                >>> datalevel = 'l1',
-                >>> datetime = '2020-11-16 06:10:55/' 
-
-                >>> datalevel = 'l2',
-                >>> datetime = '/2020-112-18 00:00:00' 
-
+        Examples:
+            >>> Neid.query_datetime ('l0', 
+            >>>                      '2020-11-16 06:10:55/2020-11-18 00:00:00',
+            >>>                      outpath=outpath) 
+            
+            >>> Neid.query_datetime ('l1', 
+            >>>                      '2020-11-16 06:10:55/', 
+            >>>                      cookiepath='mycookie', 
+            >>>                      outpath=outpath) 
+            
+            >>> Neid.query_datetime ('l2', 
+            >>>                      '/2020-112-18 00:00:00', 
+            >>>                      outpath=outpath) 
         """
  
         if (self.debug == 0):
@@ -454,32 +469,38 @@ class Archive:
         """
         'query_position' method search NEID data by 'position' 
         
-        Arguments:
-            datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
-            datetime (string): a datetime string as specified in `qurey_datetime`
-            position (string): a position string in the format of 
-	        outpath (string): (optional) a full output filepath of the returned metadata 
-                table
-            cookiepath (string): (optional) a full cookie file path saved from login for 
-                querying the proprietary NEID data.
-            token (string): (optional) a token string save in memory from login for querying 
-                the proprietary NEID data; the token is only valid for the 
-                current session.
-            format (string): (optional) votable, ipac, csv, tsv  (default: ipac)
-	        maxrec (integer): (optional) maximum records to be returned 
-	            default: -1 or not specified will return all requested records
-
-        Note:
-            Position can be a string in the following formats
-                1.  circle ra dec radius;
-                2.  polygon ra1 dec1 ra2 dec2 ra3 dec3 ra4 dec4;
-                3.  box ra dec width height;
+        Required Arguments:
         
-            All ra dec should be specified in J2000 coordinates.
+        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng
+        position (string): a position string in the format of 
+
+        1.  circle ra dec radius;
+        2.  polygon ra1 dec1 ra2 dec2 ra3 dec3 ra4 dec4;
+        3.  box ra dec width height;
+        
+        All ra dec should be specified in decimal degree J2000 coordinates.
+
+        e.g. 
+            instrument = 'l1',
+            pos = 'circle 230.0 45.0 0.5'
+
+        Optional Keyword Arguments:
+        
+        outpath (string): a full output filepath for the returned metadata table
+        
+        cookiepath (string): a full cookie file path saved from login for 
+            querying the proprietary NEID data.
+            
+        format (string): votable, ipac, csv, tsv  (default: votable)
+	
+        maxrec (integer): maximum records to be returned 
+	    default: -1 or not specified will return all requested records
 
         Examples:  
-            >>> datalevel = 'l1',
-            >>> position = 'circle 230.0 45.0 0.5'
+            >>> Neid.query_position ('l1', 
+            >>>                      'circle 230.0 45.0 0.5', 
+            >>>                      cookiepath='mycookie', 
+            >>>                      outpath=outpath)
 
         """
    
@@ -545,24 +566,31 @@ class Archive:
         This method resolves the object name into coordiates to be used as the
         center of the circle position search with default radius of 0.5 deg.
  
-        Arguments:
-            datalevel: l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
-            object (string): an object name resolvable by SIMBAD, NED, and
-                ExoPlanet's name_resolve; 
-	        outpath (string): (optional) a full output filepath of the returned metadata 
+        Required Arguments:
+        
+        datalevel: l0, l1, l2, eng, solarl0, solarl1, solarl2, or solareng 
+        
+        object (string): an object name resolvable by SIMBAD, NED, and
+            ExoPlanet's name_resolve; 
+	
+        Optional Keyword Arguments:
+        
+        outpath (string): a full output filepath of the returned metadata 
                 table
-            cookiepath (string): (optional) a full cookie file path saved from login for 
-                querying the proprietary NEID data.
-            token (string): (optional) a token string save in memory from login for querying 
-                the proprietary NEID data; the token is only valid for the 
-                current session.
-            format (string): (optional) votable, ipac, csv, tsv  (default: ipac)
-	        maxrec (integer): (optional) maximum records to be returned 
-	            default: -1 or not specified will return all requested records
+        
+        cookiepath (string): a full cookie file path saved from login for 
+            querying the proprietary NEID data.
+            
+        format (string): votable, ipac, csv, tsv  (default: votable)
+	
+        maxrec (integer): maximum records to be returned 
+	    default: -1 or not specified will return all requested records
 
-        Examples: 
-            datalevel = 'l1',
-            object = 'WD 1145+017'
+        Example: 
+            >>> Neid ('l1', 
+            >>>       'WD 1145+017', 
+            >>>       cookiepath= 'mycookie', 
+            >>>       outpath=outpath)
         """
    
         if (self.debug == 0):
@@ -682,25 +710,30 @@ class Archive:
         return
     
     def query_qobject (self, datalevel, qobject, **kwargs):
+        
         """
         'query_qobject' method search NEID data for 'qobject' column value. 
         This method resolves the object name into coordiates to be used as the
-	    center of the circle position search with default radius of 0.5 deg.
+	center of the circle position search with default radius of 0.5 deg.
 
-        Arguments:    
-            datalevel: l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
-            qobject (string): an object name as specified in the QOBJECT column.
-                This is usually the Gaia DR2 ID
-	        outpath (string): (optional) a full output filepath of the returned metadata 
-                table
-            cookiepath (string): (optional) a full cookie file path saved from login for 
-                querying the proprietary NEID data.
-            token (string): (optional) a token string save in memory from login for querying 
-                the proprietary NEID data; the token is only valid for the 
-                current session.
-            format (string): (optional) votable, ipac, csv, tsv  (default: ipac)
-	        maxrec (integer): (optional) maximum records to be returned 
-	            default: -1 or not specified will return all requested records
+        Required Arguments:    
+        
+        datalevel: l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
+        
+        qobject (string): an object name as specified in the QOBJECT column.
+            This is usually the Gaia DR2 ID 
+            
+        Optional Keyword Arguments:    
+        
+        outpath (string):  a full output filepath of the returned metadata table
+       
+        cookiepath (string): a full cookie file path saved from login for 
+            querying the proprietary NEID data.
+        
+        format (string): votable, ipac, csv, tsv  (default: votable)
+	
+        maxrec (integer): maximum records to be returned 
+	    default: -1 or not specified will return all requested records
 
         """
    
@@ -772,20 +805,24 @@ class Archive:
         """
         'query_piname' method search NEID data by PI name 
         
-        Arguments:    
-            datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
-            datetime (string): a datetime string in the format of 
-            piname (string): PI name as formated in the project's catalog 
-       	    outpath (string): (optional) a full output filepath of the returned metadata 
-                table
-            cookiepath (string): (optional) a full cookie file path saved from login for 
-                querying the proprietary NEID data.
-            token (string): (optional) a token string save in memory from login for querying 
-                the proprietary NEID data; the token is only valid for the 
-                current session.
-            format (string): (optional) votable, ipac, csv, tsv  (default: ipac)
-	        maxrec (integer): (optional) maximum records to be returned 
-	            default: -1 or not specified will return all requested records
+        Required Arguments:    
+        
+        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, 
+            or solareng 
+            
+        piname (string): PI name as formated in the project's catalog 
+       	
+        Optional Keyword Arguments:    
+        
+        outpath (string): a full output filepath of the returned metadata table
+        
+        cookiepath (string): a full cookie file path saved from login for 
+            querying the proprietary NEID data.
+        
+        format (string): votable, ipac, csv, tsv  (default: votable)
+	
+        maxrec (integer): maximum records to be returned 
+	    default: -1 or not specified will return all requested records
         """
    
         if (self.debug == 0):
@@ -847,20 +884,29 @@ class Archive:
         """
         'query_program' method search NEID data by 'program' 
         
-        Arguments:
-            datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
-            datetime (string): datetime string
-            program (string): program ID in the project's catalog 
-            outpath (string): (optional) a full output filepath of the returned metadata 
-                table
-            cookiepath (string): (optional) a full cookie file path saved from login for 
+        Required Arguments:
+            
+        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng
+        
+        program (string): program ID in the project's catalog 
+            
+        Optional Keyword Arguments:
+            
+        outpath (string): a full output filepath of the returned metadata table
+        
+        cookiepath (string): a full cookie file path saved from login for 
                 querying the proprietary NEID data.
-            token (string): (optional) a token string save in memory from login for querying 
-                the proprietary NEID data; the token is only valid for the 
-                current session.
-            format (string): (optional) votable, ipac, csv, tsv  (default: ipac)
-	        maxrec (integer): (optional) maximum records to be returned 
-	            default: -1 or not specified will return all requested records
+        
+        format (string): votable, ipac, csv, tsv  (default: ipac)
+	
+        maxrec (integer): maximum records to be returned 
+	    default: -1 or not specified will return all requested records
+        
+        Examples:  
+            >>> Neid.query_position ('l1', 
+            >>>                      'circle 230.0 45.0 0.5', 
+            >>>                      cookiepath='mycookie', 
+            >>>                      outpath=outpath)
         """
    
         if (self.debug == 0):
@@ -921,22 +967,36 @@ class Archive:
     def query_criteria (self, param, **kwargs):
         """
         'query_criteria' method allows the search of NEID data by multiple
-        the parameters specified in a dictionary (param).
+            the parameters specified in a dictionary (param).
 
-        Arguments:
-            param (dict): a dictionary containing the following keys; datalevel, datetime, position, target.
-                See individual methods for input formating. 
-            outpath (string): (optional) a full output filepath of the returned metadata 
-                table
-            cookiepath (string): (optional) a full cookie file path saved from login for 
+        Required Arguments:
+        
+        param (dict): a dictionary containing the allowable Neid search 
+            parameters -- datalevel, datetime, position, target, program;
+            it is a way of combining multiple constraints in a search.
+       
+        Optional Keyword Arguments:
+        
+        outpath (string): a full output filepath for the returned metadata table
+        
+        cookiepath (string): a full cookie file path saved from login for 
                 querying the proprietary NEID data.
-            token (string): (optional) a token string save in memory from login for querying 
-                the proprietary NEID data; the token is only valid for the 
-                current session.
-            format (string): (optional) votable, ipac, csv, tsv  (default: ipac)
-	        maxrec (integer): (optional) maximum records to be returned 
-	            default: -1 or not specified will return all requested records
+        
+        format (string): votable, ipac, csv, tsv  (default: votable)
+	
+        maxrec (integer): maximum records to be returned 
+	    default: -1 or not specified will return all requested records
 
+        Example:
+            >>> param = dict()
+            >>> param['datalevel'] = 'l0'
+            >>> param['datetime'] = '2021-01-14 00:00:00/2021-01-14 23:59:59'
+            >>> param['object'] = 'HD 95735'
+
+            >>> Neid.query_criteria (param,
+            >>>     cookiepath='./neidadmincookie.txt',
+            >>>     format='ipac',
+            >>>     outpath='./criteria.tbl')
         """
 
         if (self.debug == 0):
@@ -1248,19 +1308,30 @@ class Archive:
         'query_adql' method receives a qualified ADQL query string from
 	    user input.
         
-        Arguments:
-            query (string):  a ADQL query
-            outpath (string): (optional) a full output filepath of the returned metadata 
-                table
-            cookiepath (string): (optional) a full cookie file path saved from login for 
+        Required Arguments:
+        
+        query (string):  a ADQL query
+            
+        Optional Keyword Arguments:
+        
+        outpath (string): a full output filepath of the returned metadata table
+        
+        cookiepath (string): a full cookie file path saved from login for 
                 querying the proprietary NEID data.
-            token (string): (optional) a token string save in memory from login for querying 
-                the proprietary NEID data; the token is only valid for the 
-                current session.
-            format (string): (optional) votable, ipac, csv, tsv  (default: ipac)
-	        maxrec (integer): (optional) maximum records to be returned 
-	            default: -1 or not specified will return all requested records
+        
+        format (string): votable, ipac, csv, tsv  (default: votable)
+	
+        maxrec (integer): (optional) maximum records to be returned 
+	    default: -1 or not specified will return all requested records
 
+
+        Example:
+
+            >>> query = "select * from neidl0"
+
+            >>> Neid.query_adql (query,
+            >>>     cookiepath='mycookie',
+            >>>     outpath='./adql..tbl')
         """
    
         if (self.debug == 0):
@@ -1348,30 +1419,119 @@ class Archive:
         """
 
         self.tap = None
-
         if (len(self.cookiepath) > 0):
-           
+            
             if self.debug:
-                self.tap = NeidTap (self.tap_url, \
-                    format=self.format, \
-                    maxrec=self.maxrec, \
-                    cookiefile=self.cookiepath, \
-	            debug=1)
+                logging.debug ('')
+                logging.debug ('xxx0')
+                logging.debug (f'cookiepath= {self.cookiepath:s}')
+       
+            if self.debug:
+                
+                try:
+                    self.tap = NeidTap (self.tap_url, \
+                        format=self.format, \
+                        maxrec=self.maxrec, \
+                        cookiefile=self.cookiepath, \
+	                debug=1)
+                
+                except Exception as e:
+            
+                    if self.debug:
+                        logging.debug ('')
+                        logging.debug (f'Error: {str(e):s}')
+                    
+                    print (str(e))
+                    return 
+
             else:
-                self.tap = NeidTap (self.tap_url, \
-                    format=self.format, \
-                    maxrec=self.maxrec, \
-                    cookiefile=self.cookiepath)
+                try:
+                    self.tap = NeidTap (self.tap_url, \
+                        format=self.format, \
+                        maxrec=self.maxrec, \
+                        cookiefile=self.cookiepath)
+                
+                except Exception as e:
+            
+                    if self.debug:
+                        logging.debug ('')
+                        logging.debug (f'Error: {str(e):s}')
+                    
+                    print (str(e))
+                    return 
+        
+        elif (len(self.token) > 0):
+            
+            if self.debug:
+                logging.debug ('')
+                logging.debug ('xxx1')
+                logging.debug (f'token= {self.token:s}')
+       
+            if self.debug:
+                
+                try:
+                    self.tap = NeidTap (self.tap_url, \
+                        format=self.format, \
+                        maxrec=self.maxrec, \
+                        token=self.token, \
+	                debug=1)
+                
+                except Exception as e:
+            
+                    if self.debug:
+                        logging.debug ('')
+                        logging.debug (f'Error: {str(e):s}')
+                    
+                    print (str(e))
+                    return 
+
+            else:
+                try:
+                    self.tap = NeidTap (self.tap_url, \
+                        format=self.format, \
+                        maxrec=self.maxrec, \
+                        token=self.token)
+                
+                except Exception as e:
+            
+                    if self.debug:
+                        logging.debug ('')
+                        logging.debug (f'Error: {str(e):s}')
+                    
+                    print (str(e))
+                    return 
+        
         else: 
             if self.debug:
-                self.tap = NeidTap (self.tap_url, \
-                    format=self.format, \
-                    maxrec=self.maxrec, \
-	            debug=1)
+                try:
+                    self.tap = NeidTap (self.tap_url, \
+                        format=self.format, \
+                        maxrec=self.maxrec, \
+	                debug=1)
+                
+                except Exception as e:
+            
+                    if self.debug:
+                        logging.debug ('')
+                        logging.debug (f'Error: {str(e):s}')
+                    
+                    print (str(e))
+                    return 
+        
             else:
-                self.tap = NeidTap (self.tap_url, \
-                    format=self.format, \
-                    maxrec=self.maxrec)
+                try:
+                    self.tap = NeidTap (self.tap_url, \
+                        format=self.format, \
+                        maxrec=self.maxrec)
+        
+                except Exception as e:
+            
+                    if self.debug:
+                        logging.debug ('')
+                        logging.debug (f'Error: {str(e):s}')
+                    
+                    print (str(e))
+                    return 
         
         if self.debug:
             logging.debug('')
@@ -1426,7 +1586,6 @@ class Archive:
 
     def print_data (self):
 
-
         if self.debug:
             logging.debug ('')
             logging.debug ('Enter neid.print_data:')
@@ -1442,21 +1601,40 @@ class Archive:
     
     def download (self, metapath, datalevel, format, outdir, **kwargs):
         """
-            The download method allows users to download FITS files shown in 
-            the retrieved metadata file. The column 'filepath' must be included
-            in the metadata file columns in order to download files.
+        The download method allows users to download FITS files shown in 
+        the retrieved metadata file. The column 'filepath' must be included
+        in the metadata file columns in order to download files.
         
-        Arguments:
-            metapath (string): a full path metadata table obtained from running query methods
-            datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng
-            datetime (string): a datetime range string, see `query_datetime`
-            format (string): metasata table's format: ipac, votable, csv, or tsv.
-            outdir (string): the directory for depositing the returned files      
-            cookiepath (string): (optional) cookie file path for downloading the proprietary NEID data.
-            token (string): (optional) token string obtained from login.
-            start_row (integer): (optional) starting row
-            end_row (integer): (optional) ending row
-            calibfile (bool): whether to download the associated calibration files (0/1); default is False.
+        Required Arguments:
+        
+        metapath (string): a full path metadata table obtained from running 
+            query methods
+        
+        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, or
+            solareng
+        
+        format (string): metasata table's format: ipac, votable, csv, or tsv.
+       
+        outdir (string): the directory for depositing the returned files      
+      
+        Optional Keyword Arguments:
+        
+        cookiepath (string): cookie file path for downloading the proprietary 
+            NEID data.
+        
+        start_row (integer): starting row
+        
+        end_row (integer): ending row
+
+        Exampled:
+
+            >>> Neid.download ('./criteria.tbl', 
+            >>>     'l0',
+            >>>     'ipac',
+            >>>     './dnload_dir',
+            >>>     cookiepath='mycookie',
+            >>>     start_row=0,
+            >>>     end_row=10)
         """
         
         if (self.debug == 0):
@@ -2442,6 +2620,14 @@ class NeidTap(object):
             logging.debug ('')
             logging.debug (f'cookiepath= {self.cookiepath:s}')
 
+        self.token = ''
+        if ('token' in kwargs):
+            self.token = kwargs.get('token')
+
+        if self.debug:
+            logging.debug ('')
+            logging.debug (f'token= {self.token:s}')
+
 
         self.request = 'doQuery'
         if ('request' in kwargs):
@@ -2483,6 +2669,8 @@ class NeidTap(object):
         self.datadict['format'] = self.format              
         self.datadict['maxrec'] = self.maxrec              
         self.datadict['propflag'] = self.propflag              
+        if (len(self.token) > 0):
+            self.datadict['token'] = self.token              
 
         for key in self.datadict:
 
@@ -2569,6 +2757,8 @@ class NeidTap(object):
                 logging.debug ('')
                 logging.debug (f'maxrec= {self.maxrec:d}')
         
+        self.datadict['debug'] = self.debug              
+            
         for key in self.datadict:
 
             if self.debug:
@@ -2799,19 +2989,18 @@ class NeidTap(object):
        
         """save table to file
         """
-        if (len(self.outpath) > 0):
-           
-            if debug:
-                logging.debug ('')
-                logging.debug ('write data to outpath:')
+        if debug:
+            logging.debug ('')
+            logging.debug ('write data to outpath:')
 
-            self.msg = self.save_data (self.outpath)
+        self.msg = self.save_data (self.outpath)
             
-            if debug:
-                logging.debug ('')
-                logging.debug (f'returned save_data: msg= {self.msg:s}')
+        if debug:
+            logging.debug ('')
+            logging.debug (f'returned save_data: msg= {self.msg:s}')
 
-            return (self.msg)
+        return (self.msg)
+
 
     def send_sync (self, query, **kwargs):
 
@@ -2951,6 +3140,8 @@ class NeidTap(object):
             logging.debug ('')
             logging.debug ('Enter save_data:')
             logging.debug (f'outpath= {outpath:s}')
+            logging.debug (f'format= {self.format:s}')
+      
       
         tmpfile_created = 0
 
@@ -3001,8 +3192,17 @@ class NeidTap(object):
             if self.debug:
                 logging.debug ('')
                 logging.debug (f'xxx2')
-                
-            self.astropytbl = Table.read (fpath, format='votable')	    
+               
+            if (self.format == 'ipac'):
+                format = 'ascii.ipac'
+            elif (self.format == 'votable'):
+                format = 'votable'
+            elif (self.format == 'csv'):
+                format = 'ascii.csv'
+            elif (self.format == 'tsv'):
+                format = 'ascii.tab'
+
+            self.astropytbl = Table.read (fpath, format=format)	    
             self.msg = 'Result saved in memory (astropy table).'
       
         if self.debug:
