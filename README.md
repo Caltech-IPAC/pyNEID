@@ -7,9 +7,9 @@ NEID Table Access Protocol (TAP) Client
 [![PyPI version](https://badge.fury.io/py/pyneid.svg)](https://badge.fury.io/py/pyneid)
 [![PyPI downloads](https://img.shields.io/pypi/dm/pyneid.svg)](https://pypistats.org/packages/pyneid)
 
-**This repository is currently in alpha release. Features may be broken or missing. Please report any bugs to neid-help@ipac.caltech.edu**
 
-Documentation is available on [ReadTheDocs](https://pyneid.readthedocs.io/en/latest/)
+Documentation is available on [ReadTheDocs](https://pyneid.readthedocs.io/en/latest/). Please report any bugs to neid-help@ipac.caltech.edu
+
 
 This package provides API access to the NEID Archive: neid.ipac.caltech.edu
 
