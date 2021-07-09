@@ -243,7 +243,19 @@ def test_query_criteria():
 
     assert os.path.exists(outpath), \
         f'Result not downloaded to file [{outpath:s}]'
-    assert (filecmp.cmp (outpath, datapath, shallow=False))
+    
+    astropytbl = None
+    astropytbl = Table.read (outpath, format='ascii.ipac')
+    assert (astropytbl is not None), \
+        "f{outpath:s} cannot be read by astropy"
+
+    astropytbl_truth = None
+    astropytbl_truth = Table.read (datapath, format='ascii.ipac')
+    assert (astropytbl_truth  is not None), \
+        "f{datapath:s} cannot be read by astropy"
+
+    assert (len(astropytbl) >= len(astropytbl_truth)), \
+        f"Number of records in {outpath:s} is incorrect"
 
 
 #
