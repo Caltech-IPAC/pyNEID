@@ -360,7 +360,9 @@ class Archive:
 
         Required Arguments:
             
-        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
+        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, or 
+            solareng; all in lower cases.
+
         datetime (string): a datetime string in the format of 
             datetime1/datetime2 where '/' separates the two datetime values of 
             format 'yyyy-mm-dd hh:mm:ss'
@@ -471,7 +473,9 @@ class Archive:
         
         Required Arguments:
         
-        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng
+        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, 
+            solareng; all in lowercases.
+
         position (string): a position string in the format of 
 
         1.  circle ra dec radius;
@@ -481,7 +485,7 @@ class Archive:
         All ra dec should be specified in decimal degree J2000 coordinates.
 
         e.g. 
-            instrument = 'l1',
+            datalevel = 'l1',
             pos = 'circle 230.0 45.0 0.5'
 
         Optional Keyword Arguments:
@@ -568,7 +572,9 @@ class Archive:
  
         Required Arguments:
         
-        datalevel: l0, l1, l2, eng, solarl0, solarl1, solarl2, or solareng 
+        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, 
+            or solareng; all in lowercases.
+
         
         object (string): an object name resolvable by SIMBAD, NED, and
             ExoPlanet's name_resolve; 
@@ -718,7 +724,8 @@ class Archive:
 
         Required Arguments:    
         
-        datalevel: l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng 
+        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, 
+            or solareng; all in lowercases 
         
         qobject (string): an object name as specified in the QOBJECT column.
             This is usually the Gaia DR2 ID 
@@ -808,7 +815,7 @@ class Archive:
         Required Arguments:    
         
         datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, 
-            or solareng 
+            or solareng; all in lowercases.
             
         piname (string): PI name as formated in the project's catalog 
        	
@@ -886,7 +893,8 @@ class Archive:
         
         Required Arguments:
             
-        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, solareng
+        datalevel (string): l0, l1, l2, eng, solarl0, solarl1, solarl2, 
+            or solareng; all in lowercases.
         
         program (string): program ID in the project's catalog 
             
@@ -1057,6 +1065,26 @@ class Archive:
             for k,v in param.items():
                 logging.debug (f'k, v= {k:s}, {str(v):s}')
 
+        """make datalevel to lowercase
+        """
+
+        datalevel = param['datalevel'].lower()
+
+        if ((datalevel != 'l0') and \
+            (datalevel != 'l1') and \
+            (datalevel != 'l2') and \
+            (datalevel != 'eng') and \
+            (datalevel != 'solarl0') and \
+            (datalevel != 'solarl1') and \
+            (datalevel != 'solarl2') and \
+            (datalevel != 'solareng')):
+            
+            print ("Datalevel name error: datalevel must be one of l0, l1, l2, eng, solarl0, solarl1, solarl2, or solareng; must be lowercases.'")
+            return
+        
+        param['datalevel'] = datalevel
+
+
         """send url to server to construct the select statement
         """
       
@@ -1122,6 +1150,9 @@ class Archive:
             if self.debug:
                 logging.debug ('')
                 logging.debug ('returned __make_query')
+                logging.debug (f'query= {query:s}')
+                logging.debug (f'status= {self.status:s}')
+                logging.debug (f'msg= {self.msg:s}')
   
         except Exception as e:
 
@@ -1135,6 +1166,8 @@ class Archive:
         if self.debug:
             logging.debug ('')
             logging.debug (f'query= {query:s}')
+            logging.debug (f'status= {self.status:s}')
+            logging.debug (f'msg= {self.msg:s}')
        
         self.query = query
 
@@ -2270,7 +2303,6 @@ class Archive:
 
             """error message
             """
-
             try:
                 jsondata = json.loads (response.text)
                  
@@ -2285,6 +2317,11 @@ class Archive:
 
 
                 if (self.status == 'ok'):
+                    
+                    if self.debug:
+                        logging.debug ('')
+                        logging.debug ('xxx1')
+
                     query = jsondata['query']
                     
                     if self.debug:
@@ -2292,24 +2329,41 @@ class Archive:
                         logging.debug (f'query: {self.query:s}')
 
                 else:
+                    if self.debug:
+                        logging.debug ('')
+                        logging.debug ('xxx2')
+
                     self.msg = jsondata['msg']
                     
                     if self.debug:
                         logging.debug ('')
                         logging.debug (f'msg: {self.msg:s}')
 
-                    raise Exception (self.msg)
+                    #raise Exception (self.msg)
 
             except Exception:
+                if self.debug:
+                    logging.debug ('')
+                    logging.debug ('xxx3')
+
                 self.msg = 'returned JSON object parse error'
                 
                 if self.debug:
                     logging.debug ('')
                     logging.debug ('JSON object parse error')
       
-                
                 raise Exception (self.msg)
-            
+           
+            if self.debug:
+                logging.debug ('')
+                logging.debug ('xxx4: out of JSON parse')
+                logging.debug (f'msg: {self.msg:s}')
+                logging.debug (f'status: {self.status:s}')
+                logging.debug (f'query {query:s}')
+   
+        if (len(query) == 0):
+            raise Exception ('Server error: ' + self.msg)
+
         return (query)
     
 class objLookup(object):
