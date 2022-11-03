@@ -25,7 +25,7 @@ Or by downloading directly from the `GitHub repository <https://github.com/Calte
 
 The :ref:`Archive class <archive>` contains many useful methods for working with the NIED archive.
 
-This package (alpha-release) is under active development by the NASA Exoplanet Science Institute.
+This package is under active development by the NASA Exoplanet Science Institute.
 
 Please report any bugs, issues, or feature requests to the `NEID Help Desk <mailto: neid-help@ipac.caltech.edu>`_.
 

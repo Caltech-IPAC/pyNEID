@@ -294,65 +294,65 @@ def test_qeury_adql():
 #    test query_adql method: 
 #    download the first two files from metadata file criteria.l1.tbl
 #
-dnloaddict = {
-    "l0":"./datetime.l0.tbl", \
-    "l1":"./criteria.l1.tbl"
-}
+# dnloaddict = {
+#     "l0":"./datetime.l0.tbl", \
+#     "l1":"./criteria.l1.tbl"
+# }
 
-@pytest.mark.parametrize ("datalevel,metatbl", list(dnloaddict.items()), \
-    ids=list(dnloaddict.keys()))
+# @pytest.mark.parametrize ("datalevel,metatbl", list(dnloaddict.items()), \
+#     ids=list(dnloaddict.keys()))
 
-def test_download(datalevel, metatbl, capsys):
-#
-#    Check if metadata file contains datalevel + 'filepath' column
-#
-    astropytbl = Table.read (metatbl, format='ascii.ipac')
-    len_col = len(astropytbl.colnames)
+# def test_download(datalevel, metatbl, capsys):
+# #
+# #    Check if metadata file contains datalevel + 'filepath' column
+# #
+#     astropytbl = Table.read (metatbl, format='ascii.ipac')
+#     len_col = len(astropytbl.colnames)
 
-    ind_filepathcol = -1
-    for i in range (0, len_col):
+#     ind_filepathcol = -1
+#     for i in range (0, len_col):
    
-        colname = datalevel + 'filepath'
-        if (astropytbl.colnames[i].lower() == colname):
-            ind_filepathcol = i
+#         colname = datalevel + 'filepath'
+#         if (astropytbl.colnames[i].lower() == colname):
+#             ind_filepathcol = i
 
-    assert (ind_filepathcol >= 0), \
-        "filepath column doesn't exit in metadata table"
+#     assert (ind_filepathcol >= 0), \
+#         "filepath column doesn't exit in metadata table"
 
-#
-#    Make sure ./dnload_dir is empty
-#
-    dnloaddir = './dnload_dir'
-    srow = 0
-    erow = 1
+# #
+# #    Make sure ./dnload_dir is empty
+# #
+#     dnloaddir = './dnload_dir'
+#     srow = 0
+#     erow = 1
 
-    if (os.path.exists (dnloaddir)):
+#     if (os.path.exists (dnloaddir)):
         
-        files = os.listdir(dnloaddir)
+#         files = os.listdir(dnloaddir)
         
-        for f in files: 
-            os.remove(dnloaddir + '/'+f)
+#         for f in files: 
+#             os.remove(dnloaddir + '/'+f)
 
-    Neid.download(metatbl, \
-        datalevel, \
-        'ipac', \
-        dnloaddir, \
-        cookiepath='./neidtestcookie.txt', \
-        start_row=srow, \
-        end_row=erow)
+#     Neid.download(metatbl, \
+#         datalevel, \
+#         'ipac', \
+#         dnloaddir, \
+#         cookiepath='./neidtestcookie.txt', \
+#         start_row=srow, \
+#         end_row=erow)
    
-    for i in range (srow, erow):
+#     for i in range (srow, erow):
 
-        filepath = astropytbl[i][ind_filepathcol]
-        ind = filepath.rindex ('/')
-        filename = filepath[ind+1:]
+#         filepath = astropytbl[i][ind_filepathcol]
+#         ind = filepath.rindex ('/')
+#         filename = filepath[ind+1:]
         
-        print (f'filename= {filename:s}') 
-        print (f'filepath= {filepath:s}') 
+#         print (f'filename= {filename:s}') 
+#         print (f'filepath= {filepath:s}') 
     
-        dnloaded = dnloaddir + '/' + filename 
-        assert (os.path.exists (dnloaded))
+#         dnloaded = dnloaddir + '/' + filename 
+#         assert (os.path.exists (dnloaded))
         
-        filesize = Path (dnloaded).stat().st_size
-        assert (filesize > 100000)
+#         filesize = Path (dnloaded).stat().st_size
+#         assert (filesize > 100000)
 
